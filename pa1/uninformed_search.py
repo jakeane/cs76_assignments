@@ -1,3 +1,5 @@
+# PA1: uninformed_search
+# Jack Keane
 
 from collections import deque
 from SearchSolution import SearchSolution
@@ -71,6 +73,11 @@ def dfs_search(search_problem, depth_limit=100, node=None, solution=None):
         node = SearchNode(search_problem.start_state)
         solution = SearchSolution(search_problem, "DFS")
 
+        # handle edge case where start_state is goal_state
+        if search_problem.goal_test(node.state):
+            solution.path = backchain(SearchNode(node.state))
+            return solution
+
     solution.nodes_visited += 1
 
     # return if depth limit reached
@@ -116,7 +123,7 @@ def ids_search(search_problem, depth_limit=100):
 
 
 if __name__ == "__main__":
-    test_cp = FoxProblem((5, 4, 1))
+    test_cp = FoxProblem((0, 0, 0))
     print(bfs_search(test_cp))
     print(dfs_search(test_cp))
     print(ids_search(test_cp))
