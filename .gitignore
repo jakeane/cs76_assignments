@@ -1,1 +1,6 @@
 .DS_Store
+*.pyc
+*.pdf
+*.png
+*.zip
+*.svg
