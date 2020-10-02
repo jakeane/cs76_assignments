@@ -44,6 +44,10 @@ class MazeworldProblem:
                 successors.append(new_succ)
         return successors
 
+    # if bots did not move, transition cost is 0
+    def transition_cost(self, curr_state, succ_state):
+        return 0 if curr_state[1:] == succ_state[1:] else 1
+
     def goal_test(self, state):
         return self.goal_locations == state[1:]
 

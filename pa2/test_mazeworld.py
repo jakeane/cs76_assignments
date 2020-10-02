@@ -13,16 +13,16 @@ def null_heuristic(state):
 # Test problems
 
 
-test_maze3 = Maze("maze3.maz")
-test_mp = MazeworldProblem(test_maze3, (1, 4, 1, 3, 1, 2))
+test_maze3 = Maze("maze4.maz")
+test_mp = MazeworldProblem(test_maze3, (6, 1, 5, 1, 4, 1))
 
 print(test_mp.get_successors(test_mp.start_state))
 
 print("starting search")
 
 # this should explore a lot of nodes; it's just uniform-cost search
-result = astar_search(test_mp, null_heuristic)
-print(result)
+# result = astar_search(test_mp, null_heuristic)
+# print(result)
 # test_mp.animate_path(result.path)
 
 # this should do a bit better:
@@ -31,6 +31,6 @@ print(result)
 # test_mp.animate_path(result.path)
 
 # Your additional tests here:
-result = astar_search(test_mp, test_mp.euclidian_heuristic)
-print(result)
+# result = astar_search(test_mp, test_mp.euclidian_heuristic)
+# print(result)
 # test_mp.animate_path(result.path)

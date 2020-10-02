@@ -61,14 +61,10 @@ def astar_search(search_problem, heuristic_fn):
         successors = search_problem.get_successors(curr_node.state)
         for successor in successors:
 
-            # check if robots moved
-            # if not, transition cost is 0
-            if curr_node.state[1:] == successor[1:]:
-                succ_node = AstarNode(
-                    successor, heuristic_fn(successor), curr_node, 0)
-            else:
-                succ_node = AstarNode(
-                    successor, heuristic_fn(successor), curr_node, 1)
+            # transition_cost checks if robots moved
+            # if not, cost is 0
+            succ_node = AstarNode(
+                successor, heuristic_fn(successor), curr_node, search_problem.transition_cost(curr_node.state, successor))
 
             # check if goal was reached
             if search_problem.goal_test(succ_node.state):
