@@ -43,7 +43,7 @@ class Maze:
             if len(line) == 0:
                 pass
             elif line[0] == "\\":
-                #print("command")
+                # print("command")
                 # there's only one command, \robot, so assume it is that
                 parms = line.split()
                 x = int(parms[1])
@@ -59,13 +59,11 @@ class Maze:
 
         self.map = list("".join(lines))
 
-
-
     def index(self, x, y):
         return (self.height - y - 1) * self.width + x
 
-
     # returns True if the location is a floor
+
     def is_floor(self, x, y):
         if x < 0 or x >= self.width:
             return False
@@ -73,7 +71,6 @@ class Maze:
             return False
 
         return self.map[self.index(x, y)] == "."
-
 
     def has_robot(self, x, y):
         if x < 0 or x >= self.width:
@@ -89,12 +86,12 @@ class Maze:
 
         return False
 
-
     # function called only by __str__ that takes the map and the
     #  robot state, and generates a list of characters in order
     #  that they will need to be printed out in.
+
     def create_render_list(self):
-        #print(self.robotloc)
+        # print(self.robotloc)
         renderlist = list(self.map)
 
         robot_number = 0
@@ -108,8 +105,6 @@ class Maze:
 
         return renderlist
 
-
-
     def __str__(self):
 
         # render robot locations into the map
@@ -121,7 +116,7 @@ class Maze:
         s = ""
         for y in range(self.height - 1, -1, -1):
             for x in range(self.width):
-                s+= renderlist[self.index(x, y)]
+                s += renderlist[self.index(x, y)]
 
             s += "\n"
 
@@ -138,8 +133,8 @@ if __name__ == "__main__":
     test_maze1 = Maze("maze1.maz")
     print(test_maze1)
 
-    #test_maze2 = Maze("maze2.maz")
-    #print(test_maze2)
+    test_maze2 = Maze("maze2.maz")
+    print(test_maze2)
 
     test_maze3 = Maze("maze3.maz")
     print(test_maze3)
