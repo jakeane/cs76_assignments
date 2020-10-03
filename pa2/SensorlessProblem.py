@@ -1,3 +1,4 @@
+from math import log, sqrt
 from Maze import Maze
 from time import sleep
 
@@ -5,10 +6,9 @@ from time import sleep
 class SensorlessProblem:
 
     # You write the good stuff here:
-    def __init__(self, maze, start_spot):
+    def __init__(self, maze):
         self.maze = maze
-        self.location = start_spot
-        # list comprehensions babyyyyyyyyyyy sorry
+        # list comprehensions babyyyyyyyyyyy sorry grader
         self.start_state = (tuple([p
                                    for x in range(maze.width)
                                    for y in range(maze.height)
@@ -29,7 +29,6 @@ class SensorlessProblem:
             new_succ = set()
             for loc in range(len(state) // 2):
                 curr_loc = (state[2 * loc], state[2 * loc + 1])
-                # print(curr_loc)
 
                 new_loc = tuple(map(sum, zip(curr_loc, move)))
 
@@ -37,11 +36,6 @@ class SensorlessProblem:
                     curr_loc = new_loc
                 new_succ.add(curr_loc)
             successors.append(tuple(sum(new_succ, ())))
-            # print("move:" + str(move))
-            # print(new_succ)
-            # successors.append(new_succ)
-
-        # print(successors)
         return successors
 
     def transition_cost(self, a, b):
@@ -50,8 +44,18 @@ class SensorlessProblem:
     def goal_test(self, state):
         return len(state) == 2
 
-    def sensorless_heuristic(self, state):
-        return len(state) // 2
+    def compact_heuristic(self, state):
+        col_max = state[0]
+        col_min = state[0]
+        row_max = state[1]
+        row_min = state[1]
+        for curr_bot in range(len(state) // 2):
+            col_max = max(col_max, state[2 * curr_bot])
+            row_max = max(row_max, state[2 * curr_bot + 1])
+            col_min = min(col_min, state[2 * curr_bot])
+            row_min = min(row_min, state[2 * curr_bot + 1])
+
+        return (row_max - row_min) + (col_max - col_min)
 
     def colrow_heuristic(self, state):
         columns = set()
@@ -60,7 +64,7 @@ class SensorlessProblem:
             columns.add(state[2 * curr_bot])
             rows.add(state[2 * curr_bot + 1])
 
-        return min(len(columns) + len(rows), len(state)) / 2
+        return len(columns) + len(rows) - 2
 
     def blob_heuristic(self, state):
         res = 0
@@ -78,8 +82,38 @@ class SensorlessProblem:
                 res += 1
         return res
 
+    def first_heuristic(self, state):
+        return len(state) // 2
+
+    def pythagoras_compact_heuristic(self, state):
+        col_max = state[0]
+        col_min = state[0]
+        row_max = state[1]
+        row_min = state[1]
+        for curr_bot in range(len(state) // 2):
+            col_max = max(col_max, state[2 * curr_bot])
+            row_max = max(row_max, state[2 * curr_bot + 1])
+            col_min = min(col_min, state[2 * curr_bot])
+            row_min = min(row_min, state[2 * curr_bot + 1])
+
+        return sqrt((row_max - row_min)**2 + (col_max - col_min)**2)
+
+    def log2_heuristic(self, state):
+        return log(len(state) / 2, 2)
+
+    def furthest_points_heuristic(self, state):
+        max_dist = 0
+        for loc in range(len(state) // 2):
+            curr_loc = (state[2 * loc], state[2 * loc + 1])
+            for loc2 in range(len(state) // 2):
+                other_loc = (state[2 * loc2], state[2 * loc2 + 1])
+                distance = (curr_loc[0] - other_loc[0]) + \
+                    (curr_loc[1] - other_loc[1])
+                max_dist = max(max_dist, distance)
+        return max_dist
+
     def test_heuristic(self, state):
-        return 0
+        return min(self.compact_heuristic(state), self.colrow_heuristic(state))
 
         # given a sequence of states (including robot turn), modify the maze and print it out.
         #  (Be careful, this does modify the maze!)
@@ -91,7 +125,7 @@ class SensorlessProblem:
         for state in path:
             print(str(self))
             self.maze.robotloc = tuple(state)
-            sleep(1)
+            sleep(0.4)
 
             print(str(self.maze))
 

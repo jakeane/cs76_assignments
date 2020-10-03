@@ -83,7 +83,7 @@ class MazeworldProblem:
         for state in path:
             print(str(self))
             self.maze.robotloc = tuple(state[1:])
-            sleep(1)
+            sleep(.2)
 
             print(str(self.maze))
 

@@ -13,24 +13,41 @@ def null_heuristic(state):
 # Test problems
 
 
-test_maze3 = Maze("maze4.maz")
-test_mp = MazeworldProblem(test_maze3, (6, 1, 5, 1, 4, 1))
+test_maze3 = Maze("maze3.maz")
+test_maze4 = Maze("maze4.maz")
+test_maze5 = Maze("maze5.maz")
+test_maze6 = Maze("maze6.maz")
+test_maze7 = Maze("maze7.maz")
+test_maze8 = Maze("maze8.maz")
 
-print(test_mp.get_successors(test_mp.start_state))
 
-print("starting search")
+test_mp = MazeworldProblem(test_maze3, (1, 4, 1, 3, 1, 2))
 
-# this should explore a lot of nodes; it's just uniform-cost search
-# result = astar_search(test_mp, null_heuristic)
-# print(result)
-# test_mp.animate_path(result.path)
-
-# this should do a bit better:
 result = astar_search(test_mp, test_mp.manhattan_heuristic)
 print(result)
-# test_mp.animate_path(result.path)
+test_mp.animate_path(result.path)
 
-# Your additional tests here:
-# result = astar_search(test_mp, test_mp.euclidian_heuristic)
-# print(result)
-# test_mp.animate_path(result.path)
+
+test_mp = MazeworldProblem(test_maze4, (6, 1, 5, 1, 4, 1))
+
+result = astar_search(test_mp, test_mp.manhattan_heuristic)
+print(result)
+test_mp.animate_path(result.path)
+
+test_mp = MazeworldProblem(test_maze5, (5, 3, 0, 1, 4, 2))
+
+result = astar_search(test_mp, test_mp.manhattan_heuristic)
+print(result)
+test_mp.animate_path(result.path)
+
+test_mp = MazeworldProblem(test_maze6, (9, 10, 8, 6))
+
+result = astar_search(test_mp, test_mp.manhattan_heuristic)
+print(result)
+test_mp.animate_path(result.path)
+
+test_mp = MazeworldProblem(test_maze7, (29, 1, 35, 3))
+
+result = astar_search(test_mp, test_mp.manhattan_heuristic)
+print(result)
+test_mp.animate_path(result.path)

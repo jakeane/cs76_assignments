@@ -12,26 +12,28 @@ class AStarQueue:
         self.entry_finder = {}               # mapping of nodes to entries
 
     def add_node(self, node):
-        # Add node if not visited or 'lower' priority
+        # push node if not visited or 'lower' priority
         if node.state in self.entry_finder:
             if self.entry_finder[node.state][0] > node:
                 self.remove_node(node)
-                entry = [node, False]
-                self.entry_finder[node.state] = entry
-                heappush(self.pq, node)
+                self.push_node(node)
         else:
-            entry = [node, False]
-            self.entry_finder[node.state] = entry
-            heappush(self.pq, node)
+            self.push_node(node)
+
+    def push_node(self, node):
+        entry = [node, False]
+        self.entry_finder[node.state] = entry
+        heappush(self.pq, entry)
 
     # Mark node as removed to allow addition of 'better' node
     def remove_node(self, node):
-        self.entry_finder[node.state][-1] = True
+        entry = self.entry_finder.pop(node.state)
+        entry[-1] = True
 
     def pop_node(self):
         'Remove and return the lowest priority node. Raise KeyError if empty.'
         while self.pq:
-            node = heappop(self.pq)
-            if not self.entry_finder[node.state][1]:
+            node, removed = heappop(self.pq)
+            if not removed:
                 return node
         raise KeyError('pop from an empty priority queue')
