@@ -21,21 +21,30 @@ class SensorlessProblem:
         return string
 
     def get_successors(self, state):
+        # update maze
         self.maze.robotloc = list(state)
 
         successors = []
 
+        # iterate through moves
         for move in self.moves:
+            # a set allows 'copies' to be ignored in constant time
             new_succ = set()
             for loc in range(len(state) // 2):
-                curr_loc = (state[2 * loc], state[2 * loc + 1])
 
+                curr_loc = (state[2 * loc], state[2 * loc + 1])
                 new_loc = tuple(map(sum, zip(curr_loc, move)))
 
+                # if new position is valid, then the robot moves
+                # so, make it the current position
                 if self.maze.is_floor(new_loc[0], new_loc[1]):
                     curr_loc = new_loc
+
                 new_succ.add(curr_loc)
+
+            # flatten set of tuples into one large tuple
             successors.append(tuple(sum(new_succ, ())))
+
         return successors
 
     def transition_cost(self, a, b):
@@ -45,36 +54,47 @@ class SensorlessProblem:
         return len(state) == 2
 
     def compact_heuristic(self, state):
+        # init values
         col_max = state[0]
         col_min = state[0]
         row_max = state[1]
         row_min = state[1]
+
+        # iterate through state
         for curr_bot in range(len(state) // 2):
+            # update maxes and mins
             col_max = max(col_max, state[2 * curr_bot])
             row_max = max(row_max, state[2 * curr_bot + 1])
             col_min = min(col_min, state[2 * curr_bot])
             row_min = min(row_min, state[2 * curr_bot + 1])
 
+        # get ranges and return sum
         return (row_max - row_min) + (col_max - col_min)
 
     def colrow_heuristic(self, state):
+        # sets to handle copies
         columns = set()
         rows = set()
         for curr_bot in range(len(state) // 2):
             columns.add(state[2 * curr_bot])
             rows.add(state[2 * curr_bot + 1])
 
+        # -2 to guarantee it's admissable
         return len(columns) + len(rows) - 2
 
-    def blob_heuristic(self, state):
+    def isolated_heuristic(self, state):
         res = 0
         for loc in range(len(state) // 2):
             curr_loc = (state[2 * loc], state[2 * loc + 1])
+
+            # flag means that the current position is isolated
             flag = True
             for move in self.moves:
                 new_loc = tuple(map(sum, zip(curr_loc, move)))
                 for loc2 in range(len(state) // 2):
                     other_loc = (state[2 * loc2], state[2 * loc2 + 1])
+
+                    # means a neighboring position was found, thus not isolated
                     if other_loc == new_loc:
                         flag = False
 
@@ -85,6 +105,7 @@ class SensorlessProblem:
     def first_heuristic(self, state):
         return len(state) // 2
 
+    # like compact_heuristic but the return value is the hypotenuse
     def pythagoras_compact_heuristic(self, state):
         col_max = state[0]
         col_min = state[0]
@@ -103,13 +124,22 @@ class SensorlessProblem:
 
     def furthest_points_heuristic(self, state):
         max_dist = 0
+
+        # point A
         for loc in range(len(state) // 2):
             curr_loc = (state[2 * loc], state[2 * loc + 1])
+
+            # point B
             for loc2 in range(len(state) // 2):
                 other_loc = (state[2 * loc2], state[2 * loc2 + 1])
+
+                # Get distance between A and B
                 distance = (curr_loc[0] - other_loc[0]) + \
                     (curr_loc[1] - other_loc[1])
+
+                # update if larger
                 max_dist = max(max_dist, distance)
+
         return max_dist
 
     def test_heuristic(self, state):
