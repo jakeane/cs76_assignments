@@ -4,3 +4,7 @@
 *.png
 *.zip
 *.svg
+.vscode/
+.idea/
+env/
+__pycache__

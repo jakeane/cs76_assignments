@@ -5,7 +5,8 @@ from PyQt5.QtGui import *
 
 from PyQt5.QtWidgets import QApplication, QWidget
 import sys
-import chess, chess.svg
+import chess
+import chess.svg
 from RandomAI import RandomAI
 from MinimaxAI import MinimaxAI
 from ChessGame import ChessGame
@@ -26,7 +27,6 @@ class ChessGui:
         self.svgWidget.setGeometry(50, 50, 400, 400)
         self.svgWidget.show()
 
-
     def start(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.make_move)
@@ -41,15 +41,12 @@ class ChessGui:
         svgbytes.append(svgboard)
         self.svgWidget.load(svgbytes)
 
-
     def make_move(self):
 
         print("making move, white turn " + str(self.game.board.turn))
 
         self.game.make_move()
         self.display_board()
-
-
 
 
 if __name__ == "__main__":
@@ -61,7 +58,7 @@ if __name__ == "__main__":
     # to do: gui does not work well with HumanPlayer, due to input() use on stdin conflict
     #   with event loop.
 
-    player1 = RandomAI()
+    player1 = MinimaxAI(3, True)  # RandomAI()
     player2 = RandomAI()
 
     game = ChessGame(player1, player2)

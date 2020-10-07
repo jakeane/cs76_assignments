@@ -10,16 +10,20 @@ from ChessGame import ChessGame
 
 
 import sys
+import numpy as np
 
 
-player1 = HumanPlayer()
-player2 = RandomAI()
+player1 = AlphaBetaAI(3, True)  # HumanPlayer()
+player2 = AlphaBetaAI(3, False)  # RandomAI()
 
-game = ChessGame(player1, player2)
+game: ChessGame = ChessGame(player1, player2)
+
 
 while not game.is_game_over():
     print(game)
     game.make_move()
+print(game)
 
-
-#print(hash(str(game.board)))
+player1.end_report()
+player2.end_report()
+# print(hash(str(game.board)))

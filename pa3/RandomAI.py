@@ -2,6 +2,7 @@
 import random
 from time import sleep
 
+
 class RandomAI():
     def __init__(self):
         pass
