@@ -13,8 +13,8 @@ import sys
 import numpy as np
 
 
-player1 = AlphaBetaAI(3, True)  # HumanPlayer()
-player2 = AlphaBetaAI(3, False)  # RandomAI()
+player1 = AlphaBetaAI(2, True)
+player2 = MinimaxAI(2, False)  # RandomAI()
 
 game: ChessGame = ChessGame(player1, player2)
 

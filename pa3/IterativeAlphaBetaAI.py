@@ -1,13 +1,11 @@
-import enum
-import chess
 import random
 import numpy as np
+import time
 
 
-class AlphaBetaAI():
+class IterativeAlphaBetaAI():
     # need to init who the player is, white or black
-    def __init__(self, depth, is_white):
-        self.depth = depth
+    def __init__(self, is_white):
         self.is_white = is_white
         self.num_alphabeta = 0
 
@@ -16,20 +14,29 @@ class AlphaBetaAI():
         moves = list(board.legal_moves)
         random.shuffle(moves)
 
-        values = []
-        best_value = float('-inf')
-        alpha = float('-inf')
-        beta = float('inf')
+        best_move = moves[0]
+        start = time.time()
 
-        for move in moves:
-            board.push(move)
-            new_val = self.min_value(board, self.depth, alpha, beta)
-            values.append(new_val)
-            best_value = max(best_value, new_val)
-            alpha = max(alpha, new_val)
-            board.pop()
+        for i in range(1, 10):
+            values = []
+            best_value = float('-inf')
+            alpha = float('-inf')
+            beta = float('inf')
 
-        return moves[values.index(best_value)]
+            for move in moves:
+                board.push(move)
+                new_val = self.min_value(board, i, alpha, beta)
+                values.append(new_val)
+                best_value = max(best_value, new_val)
+                alpha = max(alpha, new_val)
+                board.pop()
+            best_move = moves[values.index(best_value)]
+            print("At depth {}, the best move is {}".format(i, best_move))
+            if time.time() - start > 1:
+                print("---------------------------------")
+                return best_move
+        print("---------------------------------")
+        return best_move
 
     def max_value(self, board, depth, alpha, beta):
         self.num_alphabeta += 1
