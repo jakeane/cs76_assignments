@@ -13,23 +13,27 @@ class MinimaxAI():
 
     def choose_move(self, board):
 
+        start_num = self.num_minimax
+
+        moves = list(board.legal_moves)
+        random.seed()
+        random.shuffle(moves)
+
         values = []
 
-        for move in list(board.legal_moves):
+        for move in moves:
             board.push(move)
             values.append(self.min_value(board, self.depth))
             board.pop()
-
-        best_value = max(values)
-
-        best_moves = [i for i, val in enumerate(values) if val == best_value]
-        choice = random.choice(best_moves)
-        return list(board.legal_moves)[choice]
+        # return values
+        print("After searching {} nodes, {} was selected by {} Minimax.".format(
+            self.num_minimax - start_num, moves[values.index(max(values))], "White" if self.is_white else "Black"))
+        return moves[values.index(max(values))]
 
     def max_value(self, board, depth):
         self.num_minimax += 1
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board, False)
+            return self.simple_eval(board)
 
         value = float('-inf')
         for move in list(board.legal_moves):
@@ -41,7 +45,7 @@ class MinimaxAI():
     def min_value(self, board, depth):
         self.num_minimax += 1
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board, True)
+            return self.simple_eval(board)
 
         value = float('inf')
         for move in list(board.legal_moves):
@@ -53,14 +57,14 @@ class MinimaxAI():
     def cutoff_test(self, board, depth):
         return depth == 0 or board.is_game_over()
 
-    def simple_eval(self, board, side):
+    def simple_eval(self, board):
         evaluation = 0
 
         if board.is_game_over():
             if board.is_stalemate():
                 return evaluation
             if board.is_checkmate():
-                if side:
+                if board.turn != self.is_white:
                     evaluation += 300
                 else:
                     evaluation -= 300

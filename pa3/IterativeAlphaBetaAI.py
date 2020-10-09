@@ -12,6 +12,7 @@ class IterativeAlphaBetaAI():
     def choose_move(self, board):
 
         moves = list(board.legal_moves)
+        random.seed()
         random.shuffle(moves)
 
         best_move = moves[0]
@@ -41,7 +42,7 @@ class IterativeAlphaBetaAI():
     def max_value(self, board, depth, alpha, beta):
         self.num_alphabeta += 1
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board, False)
+            return self.simple_eval(board)
 
         value = float('-inf')
 
@@ -58,7 +59,7 @@ class IterativeAlphaBetaAI():
     def min_value(self, board, depth, alpha, beta):
         self.num_alphabeta += 1
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board, True)
+            return self.simple_eval(board)
 
         value = float('inf')
 
@@ -75,14 +76,14 @@ class IterativeAlphaBetaAI():
     def cutoff_test(self, board, depth):
         return depth == 0 or board.is_game_over()
 
-    def simple_eval(self, board, side):
+    def simple_eval(self, board):
         evaluation = 0
 
         if board.is_game_over():
             if board.is_stalemate():
                 return evaluation
             if board.is_checkmate():
-                if side:
+                if board.turn != self.is_white:
                     evaluation += 300
                 else:
                     evaluation -= 300

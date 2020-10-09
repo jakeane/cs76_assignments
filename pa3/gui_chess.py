@@ -51,21 +51,24 @@ class ChessGui:
             self.display_board()
         else:
             print("Game over!")
-            sleep(10)
-            self.game.make_move()
+            print("The winner is {}".format(
+                "Black" if self.game.board.turn else "White"))
+            game.players[0].end_report()
+            game.players[1].end_report()
+            sleep(100)
 
 
 if __name__ == "__main__":
 
-    random.seed(1)
+    random.seed()
 
     #player_ronda = RandomAI()
 
     # to do: gui does not work well with HumanPlayer, due to input() use on stdin conflict
     #   with event loop.
 
-    player1 = IterativeAlphaBetaAI(True)  # RandomAI()
-    player2 = AlphaBetaAI(3, False)
+    player1 = AlphaBetaAI(4, True)  # RandomAI()
+    player2 = AlphaBetaAI(4, False)
 
     game = ChessGame(player1, player2)
     gui = ChessGui(player1, player2)
@@ -73,3 +76,7 @@ if __name__ == "__main__":
     gui.start()
 
     sys.exit(gui.app.exec_())
+
+# [Move.from_uci('a2a3'), Move.from_uci('g2g3'), Move.from_uci('c2c4'), Move.from_uci('a2a4'), Move.from_uci('c2c3'), Move.from_uci('g1h3'), Move.from_uci('d2d4'), Move.from_uci('g1f3'),
+# Move.from_uci('e2e4'), Move.from_uci('f2f3'), Move.from_uci('b2b3'), Move.from_uci('g2g4'), Move.from_uci('f2f4'), Move.from_uci('h2h4'), Move.from_uci('e2e3'), Move.from_uci('b1a3'),
+# Move.from_uci('d2d3'), Move.from_uci('b1c3'), Move.from_uci('b2b4'), Move.from_uci('h2h3')]
