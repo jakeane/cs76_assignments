@@ -55,7 +55,7 @@ class AlphaBetaAI():
         value = float('-inf')
 
         moves = list(board.legal_moves)
-        moves.sort(key=lambda move: self.smart_comparator(
+        moves.sort(key=lambda move: self.move_comparator(
             board, move, depth), reverse=True)
 
         for move in moves:
@@ -92,8 +92,8 @@ class AlphaBetaAI():
         value = float('inf')
 
         moves = list(board.legal_moves)
-        # moves.sort(key=self.smart_comparator)
-        moves.sort(key=lambda move: self.smart_comparator(board, move, depth))
+        # moves.sort(key=self.move_comparator)
+        moves.sort(key=lambda move: self.move_comparator(board, move, depth))
 
         for move in moves:
             board.push(move)
@@ -117,7 +117,7 @@ class AlphaBetaAI():
 
         return value
 
-    def smart_comparator(self, board, move, depth):
+    def move_comparator(self, board, move, depth):
         value = 0
         board.push(move)
         if (str(board), depth) in self.transposition_table:
