@@ -1,6 +1,8 @@
 # brew install pyqt
+from SortAlphaBetaAI import SortAlphaBetaAI
 from IterativeAlphaBetaAI import IterativeAlphaBetaAI
 from AlphaBetaAI import AlphaBetaAI
+from NonOptAlphaBetaAI import NonOptAlphaBetaAI
 from PyQt5 import QtGui, QtSvg
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -51,8 +53,11 @@ class ChessGui:
             self.display_board()
         else:
             print("Game over!")
-            print("The winner is {}".format(
-                "Black" if self.game.board.turn else "White"))
+            if self.game.board.is_checkmate():
+                print("The winner is {}".format(
+                    "Black" if self.game.board.turn else "White"))
+            else:
+                print("The game resulted in a tie!")
             game.players[0].end_report()
             game.players[1].end_report()
             sleep(100)
@@ -60,15 +65,15 @@ class ChessGui:
 
 if __name__ == "__main__":
 
-    random.seed()
+    random.seed(1300)
 
     #player_ronda = RandomAI()
 
     # to do: gui does not work well with HumanPlayer, due to input() use on stdin conflict
     #   with event loop.
 
-    player1 = AlphaBetaAI(4, True)  # RandomAI()
-    player2 = AlphaBetaAI(4, False)
+    player1 = SortAlphaBetaAI(3, True)  # AlphaBetaAI(4, True)
+    player2 = SortAlphaBetaAI(3, False)
 
     game = ChessGame(player1, player2)
     gui = ChessGui(player1, player2)
@@ -76,7 +81,3 @@ if __name__ == "__main__":
     gui.start()
 
     sys.exit(gui.app.exec_())
-
-# [Move.from_uci('a2a3'), Move.from_uci('g2g3'), Move.from_uci('c2c4'), Move.from_uci('a2a4'), Move.from_uci('c2c3'), Move.from_uci('g1h3'), Move.from_uci('d2d4'), Move.from_uci('g1f3'),
-# Move.from_uci('e2e4'), Move.from_uci('f2f3'), Move.from_uci('b2b3'), Move.from_uci('g2g4'), Move.from_uci('f2f4'), Move.from_uci('h2h4'), Move.from_uci('e2e3'), Move.from_uci('b1a3'),
-# Move.from_uci('d2d3'), Move.from_uci('b1c3'), Move.from_uci('b2b4'), Move.from_uci('h2h3')]

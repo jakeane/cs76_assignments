@@ -1,14 +1,16 @@
+from MinimaxAI import MinimaxAI
+import enum
+import chess
 import random
 import numpy as np
 import time
 
 
-class AlphaBetaAI():
+class NonOptAlphaBetaAI():
     def __init__(self, depth, is_white):
         self.depth = depth
         self.is_white = is_white
         self.num_alphabeta = 0
-        self.transposition_table = dict()
         self.time = 0
 
     def choose_move(self, board):
@@ -25,7 +27,6 @@ class AlphaBetaAI():
         moves = list(board.legal_moves)
         random.seed()
         random.shuffle(moves)
-        self.transposition_table.clear()
 
         for move in moves:
             board.push(move)
@@ -40,6 +41,9 @@ class AlphaBetaAI():
 
             board.pop()
 
+        # return values
+
+        # Print and return results
         print("After searching {} nodes, {} was selected by {} AlphaBeta.".format(
             self.num_alphabeta - start_num, moves[values.index(best_value)], "White" if self.is_white else "Black"))
         self.time += time.time() - start_time
@@ -54,21 +58,12 @@ class AlphaBetaAI():
 
         value = float('-inf')
 
-        moves = list(board.legal_moves)
-        moves.sort(key=lambda move: self.smart_comparator(
-            board, move, depth), reverse=True)
-
-        for move in moves:
+        for move in list(board.legal_moves):
             board.push(move)
 
-            if (str(board), depth) in self.transposition_table:
-                new_value = self.transposition_table[(str(board), depth)]
-            else:
-                # Get move value and update if new max
-                new_value = self.min_value(board, depth - 1, alpha, beta)
-                self.transposition_table[(str(board), depth)] = new_value
-
-            value = max(value, new_value)
+            # Get move value and update if new max
+            value = max(value, self.min_value(
+                board, depth - 1, alpha, beta))
 
             # Check if we can prune
             if value >= beta:
@@ -91,19 +86,12 @@ class AlphaBetaAI():
 
         value = float('inf')
 
-        moves = list(board.legal_moves)
-        # moves.sort(key=self.smart_comparator)
-        moves.sort(key=lambda move: self.smart_comparator(board, move, depth))
-
-        for move in moves:
+        for move in list(board.legal_moves):
             board.push(move)
 
-            if (str(board), depth) in self.transposition_table:
-                new_value = self.transposition_table[(str(board), depth)]
-            else:
-                new_value = self.max_value(board, depth - 1, alpha, beta)
-                self.transposition_table[(str(board), depth)] = value
-            value = min(value, new_value)
+            # Get move value and update if new min
+            value = min(value, self.max_value(
+                board, depth - 1, alpha, beta))
 
             # Check if we can prune
             if alpha >= value:
@@ -115,16 +103,6 @@ class AlphaBetaAI():
 
             board.pop()
 
-        return value
-
-    def smart_comparator(self, board, move, depth):
-        value = 0
-        board.push(move)
-        if (str(board), depth) in self.transposition_table:
-            value = self.transposition_table[(str(board), depth)]
-        else:
-            value = self.simple_eval(board, depth)
-        board.pop()
         return value
 
     def cutoff_test(self, board, depth):
@@ -155,5 +133,5 @@ class AlphaBetaAI():
 
     def end_report(self):
         color = "White " if self.is_white else "Black "
-        print(color+"AlphaBetaAI with cutoff depth "+str(self.depth) +
+        print(color+"NonOptAlphaBetaAI with cutoff depth "+str(self.depth) +
               " searched "+str(self.num_alphabeta)+" nodes and spent "+str(int(self.time))+" seconds")

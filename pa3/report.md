@@ -40,9 +40,13 @@ In order to improve this evaluation, I think we could consider non-material fact
 
 However, the impact of depth is certainly noticable. At shallower depths, the AI clearly does not understand the repercussions of their actions as it is simply trying to capture other pieces at high risk.
 
-### Alpha-Beta Pruning
+#### Alpha-Beta Pruning
 
 There is not much else to mention here, so I will end with noting that it runs much faster, which allows us to try deeper depths.
 
-### Iterative deepening
+#### Iterative deepening
+
+### Responses
+
+####
 

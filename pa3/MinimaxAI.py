@@ -11,13 +11,13 @@ class MinimaxAI():
         self.is_white = is_white
         self.num_minimax = 0
 
-    def choose_move(self, board):
+    def choose_move(self, board, moves):
 
         start_num = self.num_minimax
 
-        moves = list(board.legal_moves)
-        random.seed()
-        random.shuffle(moves)
+        # moves = list(board.legal_moves)
+        # random.seed()
+        # random.shuffle(moves)
 
         values = []
 
@@ -25,7 +25,7 @@ class MinimaxAI():
             board.push(move)
             values.append(self.min_value(board, self.depth))
             board.pop()
-        # return values
+        return values
         print("After searching {} nodes, {} was selected by {} Minimax.".format(
             self.num_minimax - start_num, moves[values.index(max(values))], "White" if self.is_white else "Black"))
         return moves[values.index(max(values))]
@@ -33,7 +33,7 @@ class MinimaxAI():
     def max_value(self, board, depth):
         self.num_minimax += 1
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board)
+            return self.simple_eval(board, depth)
 
         value = float('-inf')
         for move in list(board.legal_moves):
@@ -45,7 +45,7 @@ class MinimaxAI():
     def min_value(self, board, depth):
         self.num_minimax += 1
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board)
+            return self.simple_eval(board, depth)
 
         value = float('inf')
         for move in list(board.legal_moves):
@@ -57,7 +57,7 @@ class MinimaxAI():
     def cutoff_test(self, board, depth):
         return depth == 0 or board.is_game_over()
 
-    def simple_eval(self, board):
+    def simple_eval(self, board, depth):
         evaluation = 0
 
         if board.is_game_over():
@@ -65,9 +65,9 @@ class MinimaxAI():
                 return evaluation
             if board.is_checkmate():
                 if board.turn != self.is_white:
-                    evaluation += 300
+                    evaluation += 200 + (50 * depth)
                 else:
-                    evaluation -= 300
+                    evaluation -= 200 + (50 * depth)
 
         board_status = [len(board.pieces(i, True)) -
                         len(board.pieces(i, False)) for i in range(1, 7)]

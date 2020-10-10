@@ -3,12 +3,11 @@ import numpy as np
 import time
 
 
-class AlphaBetaAI():
+class SortAlphaBetaAI():
     def __init__(self, depth, is_white):
         self.depth = depth
         self.is_white = is_white
         self.num_alphabeta = 0
-        self.transposition_table = dict()
         self.time = 0
 
     def choose_move(self, board):
@@ -25,7 +24,6 @@ class AlphaBetaAI():
         moves = list(board.legal_moves)
         random.seed()
         random.shuffle(moves)
-        self.transposition_table.clear()
 
         for move in moves:
             board.push(move)
@@ -55,18 +53,13 @@ class AlphaBetaAI():
         value = float('-inf')
 
         moves = list(board.legal_moves)
-        moves.sort(key=lambda move: self.smart_comparator(
+        moves.sort(key=lambda move: self.move_comparator(
             board, move, depth), reverse=True)
 
         for move in moves:
             board.push(move)
 
-            if (str(board), depth) in self.transposition_table:
-                new_value = self.transposition_table[(str(board), depth)]
-            else:
-                # Get move value and update if new max
-                new_value = self.min_value(board, depth - 1, alpha, beta)
-                self.transposition_table[(str(board), depth)] = new_value
+            new_value = self.min_value(board, depth - 1, alpha, beta)
 
             value = max(value, new_value)
 
@@ -92,17 +85,12 @@ class AlphaBetaAI():
         value = float('inf')
 
         moves = list(board.legal_moves)
-        # moves.sort(key=self.smart_comparator)
-        moves.sort(key=lambda move: self.smart_comparator(board, move, depth))
+        moves.sort(key=lambda move: self.move_comparator(board, move, depth))
 
         for move in moves:
             board.push(move)
 
-            if (str(board), depth) in self.transposition_table:
-                new_value = self.transposition_table[(str(board), depth)]
-            else:
-                new_value = self.max_value(board, depth - 1, alpha, beta)
-                self.transposition_table[(str(board), depth)] = value
+            new_value = self.max_value(board, depth - 1, alpha, beta)
             value = min(value, new_value)
 
             # Check if we can prune
@@ -117,13 +105,10 @@ class AlphaBetaAI():
 
         return value
 
-    def smart_comparator(self, board, move, depth):
+    def move_comparator(self, board, move, depth):
         value = 0
         board.push(move)
-        if (str(board), depth) in self.transposition_table:
-            value = self.transposition_table[(str(board), depth)]
-        else:
-            value = self.simple_eval(board, depth)
+        value = self.simple_eval(board, depth)
         board.pop()
         return value
 
