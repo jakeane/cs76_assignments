@@ -7,17 +7,36 @@ import time
 
 
 class NonOptAlphaBetaAI():
-    def __init__(self, depth, is_white):
+    def __init__(self, depth, is_white, use_book=False):
         self.depth = depth
         self.is_white = is_white
         self.num_alphabeta = 0
         self.time = 0
+        self.use_book = use_book
 
     def choose_move(self, board):
         # In order to check visits over duration of function
         start_num = self.num_alphabeta
         start_time = time.time()
 
+        # Query opening book if option set
+        if self.use_book:
+            with chess.polyglot.open_reader("data/performance.bin") as reader:
+                try:
+                    entry = reader.weighted_choice(board)
+                    time.sleep(1)
+
+                    print("After considering {} options from the entry book, {} was selected by {} NonOptAlphaBetaAI.".format(
+                        sum(1 for _ in reader.find_all(board)), entry.move, "White" if self.is_white else "Black"))
+                    self.time += time.time() - start_time
+                    reader.close()
+
+                    return entry.move
+
+                except IndexError:
+                    reader.close()
+
+        # init
         values = []
         best_value = float('-inf')
         alpha = float('-inf')
@@ -41,10 +60,8 @@ class NonOptAlphaBetaAI():
 
             board.pop()
 
-        # return values
-
         # Print and return results
-        print("After searching {} nodes, {} was selected by {} AlphaBeta.".format(
+        print("After searching {} nodes, {} was selected by {} NonOptAlphaBetaAI.".format(
             self.num_alphabeta - start_num, moves[values.index(best_value)], "White" if self.is_white else "Black"))
         self.time += time.time() - start_time
         return moves[values.index(best_value)]
@@ -132,6 +149,6 @@ class NonOptAlphaBetaAI():
         return evaluation + player_coef * sum(np.multiply(board_status, [1, 3, 3, 5, 9, 200]))
 
     def end_report(self):
-        color = "White " if self.is_white else "Black "
-        print(color+"NonOptAlphaBetaAI with cutoff depth "+str(self.depth) +
-              " searched "+str(self.num_alphabeta)+" nodes and spent "+str(int(self.time))+" seconds")
+        color = "White" if self.is_white else "Black"
+        print("{} NonOptAlphaBetaAI with cutoff depth {} searched {} nodes and spent {} seconds".format(
+            color, self.depth, self.num_alphabeta, int(self.time)))

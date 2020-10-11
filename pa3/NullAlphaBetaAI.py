@@ -4,7 +4,7 @@ import time
 import chess
 
 
-class SortAlphaBetaAI():
+class NullAlphaBetaAI():
     def __init__(self, depth, is_white, use_book=False):
         self.depth = depth
         self.is_white = is_white
@@ -24,7 +24,7 @@ class SortAlphaBetaAI():
                     entry = reader.weighted_choice(board)
                     time.sleep(1)
 
-                    print("After considering {} options from the entry book, {} was selected by {} SortAlphaBetaAI.".format(
+                    print("After considering {} options from the entry book, {} was selected by {} NullAlphaBetaAI.".format(
                         sum(1 for _ in reader.find_all(board)), entry.move, "White" if self.is_white else "Black"))
                     self.time += time.time() - start_time
                     reader.close()
@@ -58,7 +58,8 @@ class SortAlphaBetaAI():
 
             board.pop()
 
-        print("After searching {} nodes, {} was selected by {} SortAlphaBetaAI.".format(
+        # Print and return results
+        print("After searching {} nodes, {} was selected by {} NullAlphaBetaAI.".format(
             self.num_alphabeta - start_num, moves[values.index(best_value)], "White" if self.is_white else "Black"))
         self.time += time.time() - start_time
         return moves[values.index(best_value)]
@@ -69,6 +70,15 @@ class SortAlphaBetaAI():
         # Check if cutoff
         if self.cutoff_test(board, depth):
             return self.simple_eval(board, depth)
+
+        # Null move pruning
+        if not board.is_check():
+            board.push(chess.Move.null())
+            null_val = -self.min_value(board, depth -
+                                       2, -beta, -beta + 1)
+            board.pop()
+            if null_val >= beta:
+                return beta
 
         value = float('-inf')
 
@@ -133,7 +143,7 @@ class SortAlphaBetaAI():
         return value
 
     def cutoff_test(self, board, depth):
-        return depth == 0 or board.is_game_over()
+        return depth <= 0 or board.is_game_over()
 
     def simple_eval(self, board, depth):
         evaluation = 0
@@ -160,5 +170,5 @@ class SortAlphaBetaAI():
 
     def end_report(self):
         color = "White" if self.is_white else "Black"
-        print("{} SortAlphaBetaAI with cutoff depth {} searched {} nodes and spent {} seconds".format(
+        print("{} NullAlphaBetaAI with cutoff depth {} searched {} nodes and spent {} seconds".format(
             color, self.depth, self.num_alphabeta, int(self.time)))

@@ -40,6 +40,24 @@ It is important to note that it will not consider moves at the depth where the t
 
 Another thing to note is that I used the `SortAlphaBetaAI.py` agent for the iterative model. This was because it is generally the fastest among the 'alpha-beta' varients.
 
+#### Transposition Table and Zobrist Hash
+
+I implemented this in my main alpha-beta pruning table. It is 'two-dimensional' in the sense that the Zobrist hash of the board was the key at the first level, and the depth was the key at the second level. This second level avoid the case where a board state in the table has been visited closer to the depth limits, which results in the value to be more approximated. So, if the same board state was visited further from the depth limit, it would not be accurately calculated. This also accounts for each player's turn, as that can obscure the board value.
+
+As the key values of the first dictionary, I use the Zobrist Hash function provided by `chess.polyglot`. As Python dictionaries do not hash integers, it was a simple implementation.
+
+#### Opening Book
+
+Fortunately this functionality was very accessable in the `chess` module. I simply needed to download a file and the code was minimal. I initially thought that I would have to formulate some sort of tree that considered opening moves. However, I just needed to open the file and query moves given the board state. In order to allow some variance, I used the `weighted_choice(board)` on the file. This would cause some suboptimal choices to be made, but there was a heavy bias towards good moves.
+
+Because the selection is made nearly instantly, I make the program sleep for a second. Also as this kind of takes away from the AI implementation, it is an optional feature.
+
+#### Null Move Pruning
+
+This was implemented in `NullAlphaBetaAI.py`, and I build it on top of the `SortAlphaBetaAI.py` as it seemed the fastest.
+
+This idea was pretty interesting, and I do not think I gave it a fair shot. It seems that this would be better when deeper depth is possible. Regardless, I copied some implementation from [this](https://web.archive.org/web/20071031095933/http://www.brucemo.com/compchess/programming/nullmove.htm) article. One core thing I noticed was how a null-move search has a much smaller depth, or at least that is preferable. This does require the search algorithm to have a large depth, but I do not think that is possible in this implementation. The other thing I noticed is that it seems oriented for the maximizing player, so I am not sure if there is an equivalent for the minimizing player.
+
 ### Evaluation
 
 #### Minimax and Cutoff Test
@@ -64,3 +82,16 @@ I kept a generally low time limit for the iterative deepening, roughly 5-10 seco
 
 It seemed intuitive to maintain the values of previous board states over the course of multiple iterations. However, I think it removes optimality. The values saved at depth `i` do not always account for values at `i+1...inf`. Therefore, it seems to be detrimental to maintain previous values.
 
+As a note, another potential constraint could be nodes searched.
+
+#### Transposition Table and Zobrist Hashing
+
+This does seem to work to an extent. However, I think it can help further optimization at a given depth. In the description section, I gave a reason as to why depth is important in the table with an example. Now, let's switch it around. Given a board state, there is a stored value at an early depth, so it's value should be more accurate. Then, when reaching that same board state at a later depth, we can get a less approximated evaluation for that board state. It would essentially "extend" the depth of our agent, thus optimizing it's performance alongside runtime.
+
+#### Opening book
+
+An interesting observation with the opening book feature is when only one agent is using it. Due to the 'sub-optimal' moves that the 'non-opening-book' AI selects, the opening book (or at least the one I downloaded) runs out of moves much much earlier (like 3 moves in as opposed to 10). Maybe a larger opening book is needed...
+
+#### Null Move Pruning
+
+It seems that optimality is lost with this implementation, as its movement decisions strayed from the optimal choices. However, this could be because I tested this on a relatively shallow depth, and the advantages of this implementation could not be leveraged. Regardless, it seemed to optimize a bit, as the number of nodes visited did go down. 

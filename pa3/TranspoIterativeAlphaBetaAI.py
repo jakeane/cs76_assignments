@@ -1,23 +1,23 @@
 import random
-import chess
-from chess.polyglot import zobrist_hash, open_reader
 import numpy as np
 import time
+from chess.polyglot import zobrist_hash, open_reader
 
 
-class AlphaBetaAI():
-    def __init__(self, depth, is_white, use_book=False):
-        self.depth = depth
+class TranspoIterativeAlphaBetaAI():
+    # need to init who the player is, white or black
+    def __init__(self, is_white, time_limit=3, use_book=False):
         self.is_white = is_white
+        self.time_limit = time_limit
         self.num_alphabeta = 0
-        self.transposition_table = dict()
-        self.time = 0
+        self.start = time.time()
+        self.moves = 0
+        self.total_depth = 0
         self.use_book = use_book
+        self.transposition_max = dict()
+        self.transposition_min = dict()
 
     def choose_move(self, board):
-        # In order to check visits over duration of function
-        start_num = self.num_alphabeta
-        start_time = time.time()
 
         # Query opening book if option set
         if self.use_book:
@@ -26,9 +26,8 @@ class AlphaBetaAI():
                     entry = reader.weighted_choice(board)
                     time.sleep(1)
 
-                    print("After considering {} options from the entry book, {} was selected by {} AlphaBetaAI.".format(
+                    print("After considering {} options from the entry book, {} was selected by {} MinimaxAI.".format(
                         sum(1 for _ in reader.find_all(board)), entry.move, "White" if self.is_white else "Black"))
-                    self.time += time.time() - start_time
                     reader.close()
 
                     return entry.move
@@ -36,59 +35,72 @@ class AlphaBetaAI():
                 except IndexError:
                     reader.close()
 
-        # init
-        values = []
-        best_value = float('-inf')
-        alpha = float('-inf')
-        beta = float('inf')
+        self.moves += 1
 
-        # I am not sure if clearing maintains optimality
-        # self.transposition_table.clear()
-
-        # randomize moves to allow variance
         moves = list(board.legal_moves)
         random.seed()
         random.shuffle(moves)
 
-        for move in moves:
-            board.push(move)
+        # init
+        best_move = moves[0]
+        self.start = time.time()
+        self.transposition_max.clear()
+        self.transposition_min.clear()
+        print("---------------------------------")
 
-            # Get move value and add to list
-            new_val = self.min_value(board, self.depth, alpha, beta)
-            values.append(new_val)
+        # iterate through depths, likely will not be surpassed
+        for i in range(1, 20):
 
-            # Update if new max
-            best_value = max(best_value, new_val)
-            alpha = max(alpha, new_val)
+            # iteration init
+            values = []
+            best_value = float('-inf')
+            alpha = float('-inf')
+            beta = float('inf')
 
-            board.pop()
+            for move in moves:
+                board.push(move)
 
-        # Print and return results
-        print("After searching {} nodes, {} was selected by {} AlphaBetaAI.".format(
-            self.num_alphabeta - start_num, moves[values.index(best_value)], "White" if self.is_white else "Black"))
-        self.time += time.time() - start_time
-        return moves[values.index(best_value)]
+                # Get move value and add to list
+                new_val = self.min_value(board, i, alpha, beta)
+                values.append(new_val)
+
+                # Update if new max
+                best_value = max(best_value, new_val)
+                alpha = max(alpha, new_val)
+
+                board.pop()
+
+            # If time limit reached, return
+            if time.time() - self.start > self.time_limit:
+                print("---------------------------------")
+                self.total_depth += i - 1
+                return best_move
+
+            # If not reached, update best move
+            best_move = moves[values.index(best_value)]
+            print("At depth {}, the best move is {}".format(i, best_move))
+
+        print("---------------------------------")
+        return best_move
 
     def max_value(self, board, depth, alpha, beta):
         self.num_alphabeta += 1
 
         # Check if cutoff
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board, depth)
+            return self.simple_eval(board, depth, True)
 
         value = float('-inf')
 
-        # Sort moves to attempt earlier pruning
         moves = list(board.legal_moves)
         moves.sort(key=lambda move: self.move_comparator(
-            board, move, depth), reverse=True)
+            board, move, depth, True), reverse=True)
 
         for move in moves:
             board.push(move)
 
-            # Query the transposition table
-            if zobrist_hash(board) in self.transposition_table:
-                board_depths = self.transposition_table[zobrist_hash(board)]
+            if zobrist_hash(board) in self.transposition_max:
+                board_depths = self.transposition_max[zobrist_hash(board)]
 
                 # If value was found at current or earlier depth
                 # Use that as value, otherwise, find and assign
@@ -103,14 +115,14 @@ class AlphaBetaAI():
             # If state not found, find and assign
             else:
                 new_value = self.min_value(board, depth - 1, alpha, beta)
-                self.transposition_table[zobrist_hash(board)] = {
+                self.transposition_max[zobrist_hash(board)] = {
                     depth: new_value
                 }
 
             value = max(value, new_value)
 
-            # Check if we can prune
-            if value >= beta:
+            # Check if we can prune or time limit reached
+            if value >= beta or time.time() - self.start > self.time_limit:
                 board.pop()
                 return value
 
@@ -126,41 +138,41 @@ class AlphaBetaAI():
 
         # Check if cutoff
         if self.cutoff_test(board, depth):
-            return self.simple_eval(board, depth)
+            return self.simple_eval(board, depth, False)
 
         value = float('inf')
 
         moves = list(board.legal_moves)
-        moves.sort(key=lambda move: self.move_comparator(board, move, depth))
+        moves.sort(key=lambda move: self.move_comparator(
+            board, move, depth, False))
 
         for move in moves:
             board.push(move)
 
-            # Query transposition table
-            if zobrist_hash(board) in self.transposition_table:
-                board_depths = self.transposition_table[zobrist_hash(board)]
+            if zobrist_hash(board) in self.transposition_min:
+                board_depths = self.transposition_min[zobrist_hash(board)]
 
                 # If value was found at current or earlier depth
                 # Use that as value, otherwise, find and assign
                 max_depth = max(board_depths)
                 if max_depth > depth and (max_depth - depth) % 2 == 0:
                     new_value = board_depths[max_depth]
-
                 elif depth in board_depths:
                     new_value = board_depths[depth]
                 else:
-                    new_value = self.max_value(board, depth - 1, alpha, beta)
+                    new_value = self.min_value(board, depth - 1, alpha, beta)
                     board_depths[depth] = new_value
             # If state not found, find and assign
             else:
-                new_value = self.max_value(board, depth - 1, alpha, beta)
-                self.transposition_table[zobrist_hash(board)] = {
-                    depth: new_value}
+                new_value = self.min_value(board, depth - 1, alpha, beta)
+                self.transposition_min[zobrist_hash(board)] = {
+                    depth: new_value
+                }
 
             value = min(value, new_value)
 
-            # Check if we can prune
-            if alpha >= value:
+            # Check if we can prune or time limit has been reached
+            if alpha >= value or time.time() - self.start > self.time_limit:
                 board.pop()
                 return value
 
@@ -171,23 +183,26 @@ class AlphaBetaAI():
 
         return value
 
-    def move_comparator(self, board, move, depth):
-        value = 0
+    def move_comparator(self, board, move, depth, side):
         board.push(move)
-        if zobrist_hash(board) in self.transposition_table:
-            board_depths = self.transposition_table[zobrist_hash(board)]
+
+        transposition_table = self.transposition_max if side else self.transposition_min
+
+        if zobrist_hash(board) in transposition_table:
+            board_depths = transposition_table[zobrist_hash(board)]
 
             # If value was found at current or earlier depth
-            # Use that as value, otherwise, use simple eval
+            # Use that as value, otherwise, find and assign
             max_depth = max(board_depths)
             if max_depth > depth and (max_depth - depth) % 2 == 0:
                 value = board_depths[max_depth]
             elif depth in board_depths:
                 value = board_depths[depth]
             else:
-                value = self.simple_eval(board, depth)
+                value = self.simple_eval(board, depth, side)
+        # If state not found, find and assign
         else:
-            value = self.simple_eval(board, depth)
+            value = self.simple_eval(board, depth, side)
 
         board.pop()
         return value
@@ -195,11 +210,13 @@ class AlphaBetaAI():
     def cutoff_test(self, board, depth):
         return depth == 0 or board.is_game_over()
 
-    def simple_eval(self, board, depth):
+    def simple_eval(self, board, depth, side):
+
         # If the board is in the transposition table,
         # then a more accurate evaluation is possible
-        if zobrist_hash(board) in self.transposition_table:
-            board_depths = self.transposition_table[zobrist_hash(board)]
+        transposition_table = self.transposition_max if side else self.transposition_min
+        if zobrist_hash(board) in transposition_table:
+            board_depths = transposition_table[zobrist_hash(board)]
 
             max_depth = max(board_depths)
             if (max_depth - depth) % 2 == 0:
@@ -229,5 +246,5 @@ class AlphaBetaAI():
 
     def end_report(self):
         color = "White" if self.is_white else "Black"
-        print("{} AlphaBetaAI with cutoff depth {} searched {} nodes and spent {} seconds".format(
-            color, self.depth, self.num_alphabeta, int(self.time)))
+        print("{} IterativeAlphaBetaAI searched {} nodes averaging a depth of {}".format(
+            color, self.num_alphabeta, self.total_depth / self.moves))
