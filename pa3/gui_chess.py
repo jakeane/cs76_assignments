@@ -66,15 +66,15 @@ class ChessGui:
 
 if __name__ == "__main__":
 
-    random.seed(1300)
+    random.seed()
 
     #player_ronda = RandomAI()
 
     # to do: gui does not work well with HumanPlayer, due to input() use on stdin conflict
     #   with event loop.
 
-    player1 = IterativeAlphaBetaAI(True, 5, True)  # AlphaBetaAI(4, True)
-    player2 = SortAlphaBetaAI(2, False, True)
+    player1 = AlphaBetaAI(2, True)  # AlphaBetaAI(4, True)
+    player2 = SortAlphaBetaAI(2, False)
 
     game = ChessGame(player1, player2)
     gui = ChessGui(player1, player2)

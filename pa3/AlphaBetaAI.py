@@ -1,5 +1,4 @@
 import random
-import chess
 from chess.polyglot import zobrist_hash, open_reader
 import numpy as np
 import time
@@ -43,7 +42,7 @@ class AlphaBetaAI():
         beta = float('inf')
 
         # I am not sure if clearing maintains optimality
-        # self.transposition_table.clear()
+        self.transposition_table.clear()
 
         # randomize moves to allow variance
         moves = list(board.legal_moves)

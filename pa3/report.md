@@ -22,7 +22,7 @@ For general evaluation, I use the recommended material variant (pawn=1, knight=3
 
 #### Alpha-Beta Pruning
 
-I wrote three different versions of this 'agent'. Each of which has different levels of optimization.
+I wrote three different versions of this 'agent'. Each of which has different levels of optimization. There is also a forth variant mentioned in *Null Move Heuristic*.
 
 The first was the basic alpha-beta pruning algorithm, located in `NonOptAlphaBeta.py`, that generally follows the pseudo-code from the textbook. One thing I learned while implementing this algorithm is that it simply returns the best *value*, not the best *move*. After a new best move is found, the lower bound gets set to that value. So, if that value is found one depth below, it will be returned. This results in multiple occurence of the best value, although many of them are not factual. In order to account for this, the selected move from `alphabeta` is the *first* occurrence of the best value, similar to `minimax()`. However, it is much more important this time around, as it prevent suboptimal decision making. This also applied to subsequent iterations of this algorithm.
 
@@ -38,11 +38,11 @@ For the iterative deepinging, I made the iterations dependent on time. Meaning t
 
 It is important to note that it will not consider moves at the depth where the time limit gets enforced. This is for two reason. First is that the search tree was only partially searched, even when accounting for pruning. Therefore, the "best move" is likely not optimal. Second, the evaluation is relative, and whoever last moved is impactful to the resulting evaluation. One move could mean capturing a piece, which swings the evaluation in favor of the most recent person. This means that evaluations between depths are difficult to compare.
 
-Another thing to note is that I used the `SortAlphaBetaAI.py` agent for the iterative model. This was because it is generally the fastest among the 'alpha-beta' varients.
+Another thing to note is that I used the `SortAlphaBetaAI.py` agent for the iterative model. This was because it is generally the fastest among the 'alpha-beta' varients. However, I still tried a version that used a transoposition table, `TranspoIterativeAlphaBetaAI.py`, but it's still slower. However, I would argue that it becomes very advantageous at very large depths.
 
 #### Transposition Table and Zobrist Hash
 
-I implemented this in my main alpha-beta pruning table. It is 'two-dimensional' in the sense that the Zobrist hash of the board was the key at the first level, and the depth was the key at the second level. This second level avoid the case where a board state in the table has been visited closer to the depth limits, which results in the value to be more approximated. So, if the same board state was visited further from the depth limit, it would not be accurately calculated. This also accounts for each player's turn, as that can obscure the board value.
+I implemented this in my main alpha-beta pruning table. It is 'two-dimensional' in the sense that the Zobrist hash of the board was the key at the first level, and the depth was the key at the second level. A key functionality at this second level is if a board state has been visited at an equal or earlier depth, then it will provide the value at the earliest depth.
 
 As the key values of the first dictionary, I use the Zobrist Hash function provided by `chess.polyglot`. As Python dictionaries do not hash integers, it was a simple implementation.
 
@@ -86,7 +86,7 @@ As a note, another potential constraint could be nodes searched.
 
 #### Transposition Table and Zobrist Hashing
 
-This does seem to work to an extent. However, I think it can help further optimization at a given depth. In the description section, I gave a reason as to why depth is important in the table with an example. Now, let's switch it around. Given a board state, there is a stored value at an early depth, so it's value should be more accurate. Then, when reaching that same board state at a later depth, we can get a less approximated evaluation for that board state. It would essentially "extend" the depth of our agent, thus optimizing it's performance alongside runtime.
+The second level of the table can actually provide optimization beyond the basic Minimax. When a board state's value is recorded at an early depth, it can then be leveraged when the state is found at a later depth. The early evaluation will allow a more accurate evaluation, as the 'depth' is essentially extended in this search. Thus, providing an advantage.
 
 #### Opening book
 
