@@ -10,25 +10,34 @@ class CircuitBoardCSP(ConstraintSatisfactionProblem):
         # values is actually board size, actual values are inferred
         self.size = values
 
-        # variable is just a list as neighbors can be inferred
+        # init data to int mapping
+        self.var_conv = {var: id for id, var in enumerate(variables)}
+
         self.variables = {variable: [neighbor
-                                     for neighbor in variables
+                                     for neighbor in range(len(variables))
                                      if neighbor != variable]
-                          for variable in variables}
+                          for variable in range(len(variables))}
+
+        self.dom_conv = {y*self.size[0] + x: (x, y)
+                         for y in range(self.size[1])
+                         for x in range(self.size[0])}
 
         # given size of board and component, domains are inferred
-        self.domains = {variable: [(x, y)
-                                   for x in range(self.size[0])
-                                   for y in range(self.size[1])
-                                   if self.can_fit(variable, (x, y))]
+        self.domains = {self.var_conv[variable]: [x + y*self.size[0]
+                                                  for y in range(self.size[1])
+                                                  for x in range(self.size[0])
+                                                  if self.can_fit(variable, (x, y))]
                         for variable in variables}
 
         # constraints
-        for var_a in variables:
-            for var_b in variables:
+        for var_a in self.variables:
+            for var_b in self.variables:
                 # note that reversed tuple in condition prevents duplicates
                 if var_a != var_b and (var_b, var_a) not in self.constraints:
                     self.constraints.add((var_a, var_b))
+
+        # flip variable conversion to allow int to data translation
+        self.var_conv = {id: var for var, id in self.var_conv.items()}
 
     # helper to determine where components can/cannot fit
     def can_fit(self, variable, value):
@@ -43,14 +52,23 @@ class CircuitBoardCSP(ConstraintSatisfactionProblem):
 
     # degree determined by size of variable
     def get_degree(self, variable, assignments):
-        return variable[0] * variable[1]
+        return self.var_conv[variable][0] * self.var_conv[variable][1]
 
     # returns true if components overlap, as that is not allowed
     def constraint_helper(self, var_a, var_b, val_a, val_b):
-        if (val_a[0] >= val_b[0] + var_b[0] or val_a[0] + var_a[0] <= val_b[0]):
+
+        # for code readability
+        conv_var_a = self.var_conv[var_a]
+        conv_var_b = self.var_conv[var_b]
+        conv_val_a = self.dom_conv[val_a]
+        conv_val_b = self.dom_conv[val_b]
+
+        if (conv_val_a[0] >= conv_val_b[0] + conv_var_b[0] or
+                conv_val_a[0] + conv_var_a[0] <= conv_val_b[0]):
             return False
 
-        if (val_a[1] >= val_b[1] + var_b[1] or val_a[1] + var_a[1] <= val_b[1]):
+        if (conv_val_a[1] >= conv_val_b[1] + conv_var_b[1] or
+                conv_val_a[1] + conv_var_a[1] <= conv_val_b[1]):
             return False
 
         return True
@@ -61,9 +79,9 @@ class CircuitBoardCSP(ConstraintSatisfactionProblem):
 
         # map positions to components by iterating through each component
         for num, variable in enumerate(assignments):
-            for x in range(variable[0]):
-                for y in range(variable[1]):
-                    pos = assignments[variable]
+            for x in range(self.var_conv[variable][0]):
+                for y in range(self.var_conv[variable][1]):
+                    pos = self.dom_conv[assignments[variable]]
                     occupied[(pos[0]+x, pos[1]+y)] = chr(ord("A") + num)
 
         # build output
@@ -73,7 +91,7 @@ class CircuitBoardCSP(ConstraintSatisfactionProblem):
                 output += occupied.get((x, y), ".")
             output += "\n"
         print(output)
-        sleep(0.1)
+        sleep(0.25)
 
 
 if __name__ == "__main__":
@@ -84,11 +102,11 @@ if __name__ == "__main__":
 
     positions = (10, 3)
 
-    # circuit_data = {(2, 2), (3, 2), (5, 1), (4, 2), (1, 3)}
+    # circuit_data = {(2, 2), (3, 2), (4, 1), (4, 2), (1, 3)}
     # positions = (5, 5)
 
     circuit_problem = CircuitBoardCSP(
-        circuit_data, positions, infer=True, var_select=0, sort_values=True)
+        circuit_data, positions, infer=True, var_select=2, sort_values=True)
 
     # print(circuit_problem)
     # print(circuit_problem.mrv_heuristic({}))

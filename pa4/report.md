@@ -8,9 +8,9 @@
 
 #### CSP Program
 
-For the data management of this program, I had 3 main variables and 3 accessory variables. The main variables were not constructed in the root object as to account for the variety of implementations of CSP. The child objects were responsible for constructing the main variables. The first of the main variables, `self.variables`, was a 'graph' of the variables implemented in a dictionary, where edges signified constraints. The next main variable, `self.domains`, was a dictionary mapping variables to their respective domain of values. The last main variable, `self.constraints`, was a set of edges that signified the binary constraints. As for the accessory variables, they pertained to the adjustable aspects of the algorithms such as AC-3 inference, variable selection, and value sorting.
+For the data management of this program, I had 3 main variables, 3 accessory variables, and 2 conversion variables. The main variables were not constructed in the root object as to account for the variety of implementations of CSP. The child objects were responsible for filling the main variables. The first of the main variables, `self.variables`, was a 'graph' of the variables implemented in a dictionary, where edges signified constraints. The next main variable, `self.domains`, was a dictionary mapping variables to their respective domain of values. The last main variable, `self.constraints`, was a set of edges that signified the binary constraints. As for the accessory variables, they pertained to the adjustable aspects of the algorithms such as AC-3 inference, variable selection, and value sorting. The conversion variables (implemented uniquely in child objects) mapped variables/values to integers (all described in the discussion section).
 
-Generally speaking, I followed the pseudo-code provided in the textbook. The top level method, `backtracking_search()` simply calls the recursive method, `backtrack()` as well as prints the output. The ways that `backtrack()` differs from the textbook pseudo-code start with the options (see accessory variables above) to select the variable and sort the domain values, both methods of which are specified by the user. The next bit of difference is the `changelog`, which is specified in a very general sense in the pseudo-code. It is initialized as a dictionary that maps variables to a set where removed values are specified. Next, to allow the option for inference, I created a odd looking `if` statement. If there is `infer` is true, it will then call `ac3()` to create inferences. If `ac3()` detects a failure, the `if` statement will be false, and the assignment is immediately reverted. In all other cases, the `if` statement is true, where inside it will enter a layer of recursion and return successful results. After unsuccessful recursion, the assignment and changes are reverted via `changelog`.
+Generally speaking, I followed the pseudo-code provided in the textbook. The top level method, `backtracking_search()` simply calls the recursive method, `backtrack()` as well as prints the output. The ways that `backtrack()` differs from the textbook pseudo-code start with the options (see accessory variables above) to select the variable and to sort the domain values, both methods of which are specified by the user. The next bit of difference is the `changelog`, which is specified in a very general sense in the pseudo-code. It is implemented as a dictionary that maps variables to a set where removed values are specified. Next, to allow the option for inference, I created a odd looking `if` statement. If there is `infer` is true, it will then call `ac3()` to create inferences. If `ac3()` detects a failure, the `if` statement will be false, and the assignment is immediately reverted. In all other cases, the `if` statement is true, where inside it will enter a layer of recursion and returns successful results. After unsuccessful recursion, the assignment and changes are reverted via `changelog`.
 
 #### Heuristics
 
@@ -18,11 +18,11 @@ The 'minimum remaining values' heuristic was quite trivial to implement, as we j
 
 The 'degree' heuristic was interesting however. I initially thought it was a simple 'number of unassigned neighbors', but it is actually dependent on the problem. For the map coloring, that is the case. However, for the circuit board problem, something different is needed. In order to infer how 'constraining' a variable was, I used the area of the component (width * height) as they are well correlated. I thought about manually calculating how many positions a variable had between each of its neighbors, but that would not scale.
 
-The 'least constraining value' heuristic was more simple however, given I had a way to define an illegal assignment between two variables, I could incorporate that into the heuristic. Thus this needed to be adapted to the problem.
+The 'least constraining value' heuristic was more simple however, given I had a general way to define an illegal assignment between two variables, I could incorporate that into the heuristic. Thus this needed to be adapted to the problem.
 
 #### Inference
 
-The `ac3()` and `revise()` methods were quite directly implemented from the pseudo-code aside from one thing. As each constraint was directed in each way (like a -> b and b -> a), the for loops needed to be done for each value in a binary constraint, whereas in the pseudo-code it was just for one value.
+The `ac3()` and `revise()` methods were quite directly implemented from the pseudo-code aside from one thing. As each constraint was directed in each way (like (a, b) is a -> b and b -> a), the for loops needed to be done for each variable in a binary constraint, whereas in the pseudo-code it was just for one variable.
 
 #### Map Coloring
 
@@ -44,7 +44,7 @@ The 'constraint' was defined as no overlap between two components, which require
 
 #### CSP Program
 
-The program works quite well as it follows the pseudo-code quite directly. However, I had some issues with maintaining the changelog. Initially the address of the domain and changelog of a given variable was the same, which led to unexpected outcomes. Otherwise, not much interesting stuff to evaluate here.
+The program works quite well as it follows the pseudo-code quite directly. However, I had some issues with maintaining the changelog. Initially the address of the domain and changelog of a given variable were the same, which led to unexpected outcomes. Otherwise, not much interesting stuff to evaluate here.
 
 #### Heuristics
 
@@ -52,7 +52,7 @@ While the book says that MRV is the preferable heuristic, which I agree with, it
 
 A thing to note between MRV and degree is that I could have implemented a tie-breaker for MRV as the degree heuristic, but it seemed trivial for the scale of problems we were tackling.
 
-A last note is that while LCV seemed trivial for the circuit-board problem, that was likely because when LCV was *not* implemented, it would pick the first value in the domain list, which would usually hug up against the boundary or other components.
+A last note is that while LCV *seemed* trivial for the circuit-board problem, that was likely because when LCV was *not* implemented, it would pick the first value in the domain list, which would usually hug up against the boundary or other components.
 
 #### Inference
 
@@ -70,7 +70,13 @@ This problem does not run in linear time, as bad value selection is actually inf
 
 As mentioned earlier regarding the `can_fit()` helper function, the domain of a given component was determined by positions where the entire component fit on the board. This was done by comparing the sum of the x/y position and size to the respective board dimension.
 
-The constraint is mentioned above in the description. The legal pairs are `[(0, 0), (3, 0)], [(0, 0), (3, 1)], [(0, 0), (4, 0)], [(0, 0), (4, 1)], [(0, 0), (5, 0)], [(0, 0), (5, 1)], [(0, 1), (3, 0)], [(0, 1), (3, 1)], [(0, 1), (4, 0)], [(0, 1), (4, 1)], [(0, 1), (5, 0)], [(0, 1), (5, 1)], [(1, 0), (4, 0)], [(1, 0), (4, 1)], [(1, 0), (5, 0)], [(1, 0), (5, 1)], [(1, 1), (4, 0)], [(1, 1), (4, 1)], [(1, 1), (5, 0)], [(1, 1), (5, 1)], [(2, 0), (5, 0)], [(2, 0), (5, 1)], [(2, 1), (5, 0)], [(2, 1), (5, 1)], [(5, 0), (0, 0)], [(5, 0), (0, 1)], [(5, 1), (0, 0)], [(5, 1), (0, 1)], [(6, 0), (0, 0)], [(6, 0), (0, 1)], [(6, 0), (1, 0)], [(6, 0), (1, 1)], [(6, 1), (0, 0)], [(6, 1), (0, 1)], [(6, 1), (1, 0)], [(6, 1), (1, 1)], [(7, 0), (0, 0)], [(7, 0), (0, 1)], [(7, 0), (1, 0)], [(7, 0), (1, 1)], [(7, 0), (2, 0)], [(7, 0), (2, 1)], [(7, 1), (0, 0)], [(7, 1), (0, 1)], [(7, 1), (1, 0)], [(7, 1), (1, 1)], [(7, 1), (2, 0)], [(7, 1), (2, 1)]`.
+The constraint is mentioned above in the description. The legal pairs between 'a' (3x2) and 'b' (5x2) are `[(0, 0), (3, 0)], [(0, 0), (3, 1)], [(0, 0), (4, 0)], [(0, 0), (4, 1)], [(0, 0), (5, 0)], [(0, 0), (5, 1)], [(0, 1), (3, 0)], [(0, 1), (3, 1)], [(0, 1), (4, 0)], [(0, 1), (4, 1)], [(0, 1), (5, 0)], [(0, 1), (5, 1)], [(1, 0), (4, 0)], [(1, 0), (4, 1)], [(1, 0), (5, 0)], [(1, 0), (5, 1)], [(1, 1), (4, 0)], [(1, 1), (4, 1)], [(1, 1), (5, 0)], [(1, 1), (5, 1)], [(2, 0), (5, 0)], [(2, 0), (5, 1)], [(2, 1), (5, 0)], [(2, 1), (5, 1)], [(5, 0), (0, 0)], [(5, 0), (0, 1)], [(5, 1), (0, 0)], [(5, 1), (0, 1)], [(6, 0), (0, 0)], [(6, 0), (0, 1)], [(6, 0), (1, 0)], [(6, 0), (1, 1)], [(6, 1), (0, 0)], [(6, 1), (0, 1)], [(6, 1), (1, 0)], [(6, 1), (1, 1)], [(7, 0), (0, 0)], [(7, 0), (0, 1)], [(7, 0), (1, 0)], [(7, 0), (1, 1)], [(7, 0), (2, 0)], [(7, 0), (2, 1)], [(7, 1), (0, 0)], [(7, 1), (0, 1)], [(7, 1), (1, 0)], [(7, 1), (1, 1)], [(7, 1), (2, 0)], [(7, 1), (2, 1)]`.
 
-It doesn't convert to integers?
+To convert variables to integers in the map coloring problem, I iterated through the dictionary that was passed in, building a translated dictionary and translation table along the way. As for the domain values, it was simple translation with `range(len())`. At the end, the variable conversion table was flipped in order to translate integers back to data.
+
+To convert variables to integers in the circuit board problem. It was simple iteration through a list like the domain values using `range(len())`. However, for the domain, the (x,y) coordinates were 'flattened' onto a one-dimensional range of values. To determine the valid domain values for each component, I used the raw variables/values to calculate and saved the valid translated.
+
+One thing I want to note about this integer stuff is that it feels needless in Python as it is dynamic typing. This approach uses more memory as well in Python, but maybe it saves memory at scale in more efficient languages.
+
+
 

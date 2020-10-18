@@ -8,6 +8,8 @@ class ConstraintSatisfactionProblem:
         # So init empty objects for autocompleting while coding
         self.variables = dict()
         self.domains = dict()
+        self.var_conv = dict()
+        self.dom_conv = dict()
         self.infer = infer
         self.var_select = var_select
         self.sort_values = sort_values
@@ -23,7 +25,7 @@ class ConstraintSatisfactionProblem:
                 self.visits)
             for variable in assignments:
                 output += "\n - Variable {} assigned value {}".format(
-                    variable, assignments[variable])
+                    self.var_conv[variable], self.dom_conv[assignments[variable]])
             print(output)
 
         else:
@@ -36,7 +38,6 @@ class ConstraintSatisfactionProblem:
             return assignments
 
         variable = self.select_variable(assignments)
-
         domain = self.domains[variable]
 
         # sort domain values with lcv

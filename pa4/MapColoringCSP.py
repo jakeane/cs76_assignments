@@ -6,15 +6,41 @@ class MapColoringCSP(ConstraintSatisfactionProblem):
     def __init__(self, variables, values, infer=False, var_select=0, sort_values=False):
         super().__init__(variables, values, infer, var_select, sort_values)
 
-        self.variables = variables
-        self.domains = {variable: list(values) for variable in variables}
+        var_id = 0
+        for variable in variables:
+            # create mapping if needed
+            if variable not in self.var_conv:
+                self.var_conv[variable] = var_id
+                var_id += 1
+
+            neighbors = []
+            for neighbor in variables[variable]:
+                # create mapping if needed
+                if neighbor not in self.var_conv:
+                    self.var_conv[neighbor] = var_id
+                    var_id += 1
+
+                neighbors.append(self.var_conv[neighbor])
+
+            # create translated pairing
+            self.variables[self.var_conv[variable]] = neighbors
+
+        for dom_id, value in enumerate(values):
+            self.dom_conv[dom_id] = value
+
+        # domains are assumed to be the same across variables
+        self.domains = {variable: [i for i in range(
+            len(values))] for variable in self.variables}
 
         # build list of edges/constraints
-        for variable in variables:
-            for neighbor in variables[variable]:
+        for variable in self.variables:
+            for neighbor in self.variables[variable]:
                 # note that reversed tuple in condition prevents duplicates
                 if (neighbor, variable) not in self.constraints:
                     self.constraints.add((variable, neighbor))
+
+        # flip variable conversion to allow int to data translation
+        self.var_conv = {id: var for var, id in self.var_conv.items()}
 
     # degree determined by number of unassigned neighbors
     def get_degree(self, variable, assignments):
@@ -73,10 +99,10 @@ if __name__ == "__main__":
         }
     }
 
-    colors = ["Red", "Green"]
+    colors = ["Red", "Green", "Blue"]
 
     map_problem = MapColoringCSP(
-        map_data["can"], colors, infer=False, var_select=2, sort_values=True)
+        map_data["can"], colors, infer=True, var_select=2, sort_values=True)
 
     # print(map_problem)
     # print(map_problem.mrv_heuristic({}))
