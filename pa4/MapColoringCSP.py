@@ -5,13 +5,18 @@ class MapColoringCSP(ConstraintSatisfactionProblem):
 
     def __init__(self, variables, values, infer=False, var_select=0, sort_values=False):
         super().__init__(variables, values, infer, var_select, sort_values)
+
         self.variables = variables
         self.domains = {variable: list(values) for variable in variables}
+
+        # build list of edges/constraints
         for variable in variables:
             for neighbor in variables[variable]:
+                # note that reversed tuple in condition prevents duplicates
                 if (neighbor, variable) not in self.constraints:
                     self.constraints.add((variable, neighbor))
 
+    # degree determined by number of unassigned neighbors
     def get_degree(self, variable, assignments):
         degree = 0
         for neighbor in self.variables[variable]:
@@ -19,6 +24,7 @@ class MapColoringCSP(ConstraintSatisfactionProblem):
                 degree += 1
         return degree
 
+    # values of adjacent variables must be different
     def constraint_helper(self, var_a, var_b, val_a, val_b):
         return val_a == val_b
 

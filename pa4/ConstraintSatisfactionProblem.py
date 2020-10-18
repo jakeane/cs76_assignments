@@ -4,6 +4,8 @@ from collections import deque
 class ConstraintSatisfactionProblem:
 
     def __init__(self, variables, values, infer=False, var_select=0, sort_values=False):
+        # Cannot assume data of variables, domains, or contraints
+        # So init empty objects for autocompleting while coding
         self.variables = dict()
         self.domains = dict()
         self.infer = infer
@@ -12,8 +14,10 @@ class ConstraintSatisfactionProblem:
         self.constraints = set()
         self.visits = 0
 
+    # start search and print results
     def backtracking_search(self):
         assignments = self.backtrack({})
+
         if assignments:
             output = "After searching {} nodes. The following assignments were satisfactory:".format(
                 self.visits)
@@ -23,8 +27,9 @@ class ConstraintSatisfactionProblem:
             print(output)
 
         else:
-            print("After searching {} nodes, the search failed".format(self.visits))
+            print("After searching {} nodes, no solution was found.".format(self.visits))
 
+    # recursive main search
     def backtrack(self, assignments):
         self.visits += 1
         if self.goal_test(assignments):
@@ -33,24 +38,33 @@ class ConstraintSatisfactionProblem:
         variable = self.select_variable(assignments)
 
         domain = self.domains[variable]
+
+        # sort domain values with lcv
         if self.sort_values:
             domain.sort(
                 key=lambda value: self.lcv_heuristic(variable, value))
 
         for value in domain:
             if self.check_consistent(variable, value):
-                assignments[variable] = value
+
+                # init changelog to account for variable assignment
                 changelog = {variable: set() for variable in self.variables}
                 changelog[variable] = set(self.domains[variable])
                 changelog[variable].remove(value)
+
+                # assignment
+                assignments[variable] = value
                 self.domains[variable] = [value]
 
+                # condition false when infer is True and ac3 is False, thus failed inference
+                # set up with 'and' so ac3 only executes when infer is true
                 if not (self.infer and not self.ac3(changelog)):
                     result = self.backtrack(assignments)
 
                     if result:
                         return assignments
 
+                # after failure, revert changes
                 del assignments[variable]
                 for changed_var in changelog:
                     for value in changelog[changed_var]:
@@ -65,11 +79,13 @@ class ConstraintSatisfactionProblem:
         elif self.var_select == 2:
             selection = self.degree_heuristic(assignments)
 
+        # if above selection unsuccessful or unspecified
         if not selection:
             for variable in self.variables:
                 if variable not in assignments:
                     selection = variable
                     break
+
         return selection
 
     def goal_test(self, assignments):
@@ -89,6 +105,7 @@ class ConstraintSatisfactionProblem:
         highest_degree = 0
         for variable in self.variables:
             if variable not in assignments:
+                # get degree specified by child object method
                 curr_degree = self.get_degree(variable, assignments)
                 if curr_degree > highest_degree:
                     selection = variable
@@ -96,6 +113,7 @@ class ConstraintSatisfactionProblem:
 
         return selection
 
+    # placeholder as variable degree cannot be assumed
     def get_degree(self, variable, assignments):
         return 1
 
@@ -103,18 +121,25 @@ class ConstraintSatisfactionProblem:
         conflicts = 0
         for var_a in self.variables[var_b]:
             for val_a in self.domains[var_a]:
+                # conflict determined by child object method
                 if self.constraint_helper(var_a, var_b, val_a, val_b):
                     conflicts += 1
         return conflicts
 
     def ac3(self, changelog):
+
         arc_queue = deque(self.constraints)
 
         while arc_queue:
             var_a, var_b = arc_queue.pop()
+
             if self.revise(var_a, var_b, changelog):
+
+                # detect failure
                 if len(self.domains[var_a]) == 0 or len(self.domains[var_b]) == 0:
                     return False
+
+                # add to queue
                 for var_c in self.variables[var_a]:
                     if var_c == var_b:
                         continue
@@ -128,6 +153,8 @@ class ConstraintSatisfactionProblem:
     def revise(self, var_a, var_b, changelog):
         revised = False
 
+        # check if any values in domain cannot be satisfied anymore
+        # if so, remove value and mark return result
         for value in self.domains[var_a]:
             if self.constraint_unsatisfiable(var_b, var_a, value):
                 self.domains[var_a].remove(value)
@@ -150,9 +177,11 @@ class ConstraintSatisfactionProblem:
     def constraint_unsatisfiable(self, var_a, var_b, value):
         if len(self.domains[var_a]) == 1:
             val_a = self.domains[var_a][0]
+            # unsatisfiable determined by child object
             return self.constraint_helper(var_a, var_b, val_a, value)
         return False
 
+    # constraint cannot be assumed at root level
     def constraint_helper(self, var_a, var_b, val_a, val_b):
         return False
 
