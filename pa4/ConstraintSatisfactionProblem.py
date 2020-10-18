@@ -90,7 +90,14 @@ class ConstraintSatisfactionProblem:
         return selection
 
     def goal_test(self, assignments):
-        return len(assignments) == len(self.variables)
+        # Check complete
+        if len(assignments) == len(self.variables):
+            for variable, value in assignments.items():
+                # Check consistent
+                if not self.check_consistent(variable, value):
+                    return False
+            return True
+        return False
 
     def mrv_heuristic(self, assignments):
         selection = None
