@@ -1,5 +1,7 @@
+from Sudoku import Sudoku
 from display import display_sudoku_solution
-import random, sys
+import random
+import sys
 from SAT import SAT
 
 if __name__ == "__main__":
@@ -7,10 +9,16 @@ if __name__ == "__main__":
     #  of values:
     random.seed(1)
 
+    sudoku_problem = Sudoku()
+    sudoku_problem.load(sys.argv[1])
+
     puzzle_name = str(sys.argv[1][:-4])
+    cnf_filename = "{}.cnf".format(puzzle_name)
     sol_filename = puzzle_name + ".sol"
 
-    sat = SAT(sys.argv[1])
+    sudoku_problem.generate_cnf(cnf_filename)
+
+    sat = SAT(cnf_filename)
 
     result = sat.walksat()
 
