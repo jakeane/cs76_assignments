@@ -80,6 +80,12 @@ class Sudoku:
                 s += self.sudoku_literal(r, c, value) + " "
             s += "\n"
 
+            for c1 in range(1, 10):
+                for c2 in range(c1 + 1, 10):
+                    s += self.sudoku_literal(r, c1, value, neg=True) + " "
+                    s += self.sudoku_literal(r, c2, value, neg=True) + " "
+                    s += "\n"
+
         return s
 
     def col_clause(self, c):
@@ -88,6 +94,12 @@ class Sudoku:
             for r in range(1, 10):
                 s += self.sudoku_literal(r, c, value) + " "
             s += "\n"
+
+            for r1 in range(1, 10):
+                for r2 in range(r1 + 1, 10):
+                    s += self.sudoku_literal(r1, c, value, neg=True) + " "
+                    s += self.sudoku_literal(r2, c, value, neg=True) + " "
+                    s += "\n"
 
         return s
 
@@ -98,13 +110,26 @@ class Sudoku:
         for sr in range(1, 10, 3):
             for sc in range(1, 10, 3):
                 for value in range(1, 10):
+                    cells = []
                     for r_offset in range(3):
                         for c_offset in range(3):
                             r = sr + r_offset
                             c = sc + c_offset
                             s += self.sudoku_literal(r, c, value) + " "
+                            cells.append((r, c, value))
 
                     s += "\n"
+
+                    for i in range(len(cells)):
+                        for j in range(i+1, len(cells)):
+                            (r1, c1, v1) = cells[i]
+                            (r2, c2, v2) = cells[j]
+
+                            s += self.sudoku_literal(r1,
+                                                     c1, v1, neg=True) + " "
+                            s += self.sudoku_literal(r2,
+                                                     c2, v2, neg=True) + " "
+                            s += "\n"
 
         filehandle.write(s)
 
@@ -113,17 +138,15 @@ class Sudoku:
         for r in range(1, 10):
             for c in range(1, 10):
                 value = self.get(r, c)
-                if value !=  0:
+                if value != 0:
                     s += self.sudoku_literal(r, c, value) + "\n"
 
         filehandle.write(s)
-
 
     def write_col_clauses(self, filehandle):
         for c in range(1, 10):
             clause = self.col_clause(c)
             filehandle.write(clause)
-
 
     def write_row_clauses(self, filehandle):
         for r in range(1, 10):
@@ -150,12 +173,12 @@ if __name__ == "__main__":
     test_sudoku = Sudoku()
 
     test_sudoku.load("puzzle1.sud")
-    #print(test_sudoku)
+    # print(test_sudoku)
     # print(sudoku_literal(2, 3, 9, neg=True))
 
     # print(cell_clause(1, 1))
 
     test_sudoku.generate_cnf("puzzle1.cnf")
 
-    #test_sudoku.read_solution("rules.sol")
+    # test_sudoku.read_solution("rules.sol")
     print(test_sudoku)

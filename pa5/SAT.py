@@ -7,10 +7,14 @@ class SAT:
 
     def __init__(self, cnf_filename, threshold=0.7):
 
-        self.variables = [False]
+        self.variables = []
         self.encode = dict()
         self.threshold = threshold
         self.read_cnf(cnf_filename)
+        self.decode = {value: key for key, value in self.encode.items()}
+
+        self.largest_model = 0
+        self.visits = 0
 
     def read_cnf(self, cnf_filename):
         cnf = open(cnf_filename)
@@ -35,6 +39,131 @@ class SAT:
             self.variables.append(bool(random.getrandbits(1)))
 
         return self.encode[term]
+
+    def dpll_satisfiable(self):
+        self.model = dict()
+        return self.dpll(self.variables, self.model)
+
+    def print_model(self, model):
+        output = "{"
+        for variable in model:
+            output += "{}: {}, ".format(self.decode[variable], model[variable])
+        return output + "}"
+
+    def dpll(self, symbols, model):
+        random.seed()
+        self.visits += 1
+        if len(model) > self.largest_model:
+            print(len(model), self.visits)
+            self.largest_model = len(model)
+
+        result = True
+        for clause in self.clauses:
+            status = self.dpll_clause_eval(model, clause)
+            if status == 0:
+                result = False
+            elif status == -1:
+                return False
+        if result:
+            for symbol, value in model.items():
+                self.variables[symbol] = value
+            return True
+
+        p, value = self.find_pure_symbol(symbols, model)
+
+        if p is not None:
+            symbols[p] = None
+            model[p] = value
+            return self.dpll(list(symbols), dict(model))
+
+        p, value = self.find_unit_clause(model)
+
+        if p is not None:
+            symbols[p] = None
+            model[p] = value
+            return self.dpll(list(symbols), dict(model))
+
+        p = self.get_first_symbol(symbols)
+
+        symbols[p] = None
+        model[p] = True
+        recurse = self.dpll(list(symbols), dict(model))
+        if recurse:
+            return recurse
+        else:
+            model[p] = False
+            return self.dpll(list(symbols), dict(model))
+
+    def find_pure_symbol(self, symbols, model):
+        unsatisfied_clauses = [clause
+                               for clause in self.clauses
+                               if self.dpll_clause_eval(model, clause) != 1]
+
+        # random.shuffle(unsatisfied_clauses)
+
+        purity = dict()
+
+        for clause in unsatisfied_clauses:
+            for variable in clause:
+                if variable not in model:
+                    if variable not in purity:
+                        purity[variable] = clause[variable]
+                    else:
+                        if purity[variable] != clause[variable]:
+                            purity[variable] = None
+
+        for variable in purity:
+            if purity[variable] is not None:
+                return variable, purity[variable]
+
+        return None, None
+
+    def find_unit_clause(self, model):
+        # random.shuffle(self.clauses)
+
+        for clause in self.clauses:
+            is_unit_clause = False
+            symbol = None
+            value = None
+            for variable in clause:
+                if variable not in model:
+                    if is_unit_clause:
+                        is_unit_clause = False
+                        break
+                    else:
+                        is_unit_clause = True
+                        symbol = variable
+                        value = clause[variable]
+
+                else:
+                    if model[variable] == clause[variable]:
+                        is_unit_clause = False
+                        break
+            if is_unit_clause:
+                return symbol, value
+        return None, None
+
+    def get_first_symbol(self, symbols):
+        for i, symbol in enumerate(symbols):
+            if symbol is not None:
+                return i
+
+        # This probably won't occur
+        print("WHAAA")
+        return 0
+
+    def dpll_clause_eval(self, model, clause):
+        clause_assigned = True
+        for variable in clause:
+            if variable in model:
+                if model[variable] == clause[variable]:
+                    return 1
+            else:
+                clause_assigned = False
+        if clause_assigned:
+            return -1
+        else:
+            return 0
 
     def gsat(self):
         return self.generic_sat(200000, self.gsat_list)
@@ -137,4 +266,4 @@ class SAT:
 
 if __name__ == "__main__":
     sat = SAT(sys.argv[1])
-    print(sat.walksat())
+    print(sat.dpll_satisfiable())
