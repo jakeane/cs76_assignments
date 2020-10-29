@@ -1,6 +1,7 @@
 class Sudoku:
-    def __init__(self):
+    def __init__(self, extra_cnf):
         self.numbers = [[0 for i in range(9)] for j in range(9)]
+        self.extra_cnf = extra_cnf
 
     def load(self, filename):
         f = open(filename, "r")
@@ -80,11 +81,12 @@ class Sudoku:
                 s += self.sudoku_literal(r, c, value) + " "
             s += "\n"
 
-            for c1 in range(1, 10):
-                for c2 in range(c1 + 1, 10):
-                    s += self.sudoku_literal(r, c1, value, neg=True) + " "
-                    s += self.sudoku_literal(r, c2, value, neg=True) + " "
-                    s += "\n"
+            if self.extra_cnf:
+                for c1 in range(1, 10):
+                    for c2 in range(c1 + 1, 10):
+                        s += self.sudoku_literal(r, c1, value, neg=True) + " "
+                        s += self.sudoku_literal(r, c2, value, neg=True) + " "
+                        s += "\n"
 
         return s
 
@@ -95,11 +97,12 @@ class Sudoku:
                 s += self.sudoku_literal(r, c, value) + " "
             s += "\n"
 
-            for r1 in range(1, 10):
-                for r2 in range(r1 + 1, 10):
-                    s += self.sudoku_literal(r1, c, value, neg=True) + " "
-                    s += self.sudoku_literal(r2, c, value, neg=True) + " "
-                    s += "\n"
+            if self.extra_cnf:
+                for r1 in range(1, 10):
+                    for r2 in range(r1 + 1, 10):
+                        s += self.sudoku_literal(r1, c, value, neg=True) + " "
+                        s += self.sudoku_literal(r2, c, value, neg=True) + " "
+                        s += "\n"
 
         return s
 
@@ -120,16 +123,18 @@ class Sudoku:
 
                     s += "\n"
 
-                    for i in range(len(cells)):
-                        for j in range(i+1, len(cells)):
-                            (r1, c1, v1) = cells[i]
-                            (r2, c2, v2) = cells[j]
+                    if self.extra_cnf:
 
-                            s += self.sudoku_literal(r1,
-                                                     c1, v1, neg=True) + " "
-                            s += self.sudoku_literal(r2,
-                                                     c2, v2, neg=True) + " "
-                            s += "\n"
+                        for i in range(len(cells)):
+                            for j in range(i+1, len(cells)):
+                                (r1, c1, v1) = cells[i]
+                                (r2, c2, v2) = cells[j]
+
+                                s += self.sudoku_literal(r1,
+                                                         c1, v1, neg=True) + " "
+                                s += self.sudoku_literal(r2,
+                                                         c2, v2, neg=True) + " "
+                                s += "\n"
 
         filehandle.write(s)
 

@@ -1,3 +1,4 @@
+from DPLL import DPLL
 from SAT import SAT
 import sys
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
 
     sat = SAT(cnf_filename)
 
-    result = sat.dpll_satisfiable()
+    result = sat.gsat()
 
     if result:
         sat.write_solution(sol_filename)

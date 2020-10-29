@@ -1,3 +1,4 @@
+from DPLL import DPLL
 from Sudoku import Sudoku
 from display import display_sudoku_solution
 import random
@@ -9,7 +10,7 @@ if __name__ == "__main__":
     #  of values:
     random.seed(1)
 
-    sudoku_problem = Sudoku()
+    sudoku_problem = Sudoku(int(sys.argv[2]) == 1)
     sudoku_problem.load(sys.argv[1])
 
     puzzle_name = str(sys.argv[1][:-4])
@@ -18,7 +19,7 @@ if __name__ == "__main__":
 
     sudoku_problem.generate_cnf(cnf_filename)
 
-    sat = SAT(cnf_filename)
+    sat = DPLL(cnf_filename)
 
     result = sat.dpll_satisfiable()
 
