@@ -1,17 +1,19 @@
 from display import display_sudoku_solution
 import random
+from collections import deque
 import sys
 
 
 class SAT:
 
-    def __init__(self, cnf_filename, threshold=0.7):
+    ############# PROBLEM INIT #############
+
+    def __init__(self, cnf_filename, threshold=0.9):
 
         self.variables = []
         self.encode = dict()
         self.threshold = threshold
         self.read_cnf(cnf_filename)
-        self.decode = {value: key for key, value in self.encode.items()}
 
         self.largest_model = 0
         self.visits = 0
@@ -40,130 +42,123 @@ class SAT:
 
         return self.encode[term]
 
-    def dpll_satisfiable(self):
-        self.model = dict()
-        return self.dpll(self.variables, self.model)
+    ############# PL Resolution #############
 
-    def print_model(self, model):
-        output = "{"
-        for variable in model:
-            output += "{}: {}, ".format(self.decode[variable], model[variable])
-        return output + "}"
+    def pl_solve(self):
+        assigned = dict()
+        unassigned = deque([i for i, variable in enumerate(self.variables)])
 
-    def dpll(self, symbols, model):
-        random.seed()
-        self.visits += 1
-        if len(model) > self.largest_model:
-            print(len(model), self.visits)
-            self.largest_model = len(model)
+        kb = {str(clause): clause for clause in self.clauses}
 
-        result = True
-        for clause in self.clauses:
-            status = self.dpll_clause_eval(model, clause)
-            if status == 0:
-                result = False
-            elif status == -1:
-                return False
-        if result:
-            for symbol, value in model.items():
-                self.variables[symbol] = value
+        while unassigned:
+            variable = unassigned.popleft()
+            # print(len(unassigned), variable)
+
+            if self.pl_resolution(variable, False, assigned, kb):
+                print(variable, True)
+                assigned[variable] = True
+            elif self.pl_resolution(variable, True, assigned, kb):
+                print(variable, False)
+                assigned[variable] = False
+
+            else:
+                unassigned.append(variable)
+
+        for symbol, value in assigned.items():
+            self.variables[symbol] = value
+        print(assigned)
+        print(self.encode)
+
+    def pl_resolution(self, alpha, is_neg, assigned, kb):
+
+        assigned_clauses = {str({var: value}): {var: value}
+                            for var, value in assigned.items()}
+
+        clauses = {**kb, **assigned_clauses}
+
+        if str({alpha: not is_neg}) in clauses:
+            return False
+        if str({alpha: is_neg}) in clauses:
             return True
 
-        p, value = self.find_pure_symbol(symbols, model)
+        clauses[str({alpha: is_neg})] = {alpha: is_neg}
 
-        if p is not None:
-            symbols[p] = None
-            model[p] = value
-            return self.dpll(list(symbols), dict(model))
+        new = dict()
 
-        p, value = self.find_unit_clause(model)
+        checked = set()
 
-        if p is not None:
-            symbols[p] = None
-            model[p] = value
-            return self.dpll(list(symbols), dict(model))
+        while True:
+            for clause_i in clauses:
+                for clause_j in clauses:
+                    if clause_i != clause_j and (clause_j, clause_i) not in checked:
+                        checked.add((clause_i, clause_j))
 
-        p = self.get_first_symbol(symbols)
+                        resolvents = self.pl_resolve(
+                            clauses[clause_i], clauses[clause_j])
 
-        symbols[p] = None
-        model[p] = True
-        recurse = self.dpll(list(symbols), dict(model))
-        if recurse:
-            return recurse
-        else:
-            model[p] = False
-            return self.dpll(list(symbols), dict(model))
+                        for resolvent in resolvents.values():
+                            if len(resolvent) == 0:
+                                # print(clause_i, clause_j)
+                                return True
 
-    def find_pure_symbol(self, symbols, model):
-        unsatisfied_clauses = [clause
-                               for clause in self.clauses
-                               if self.dpll_clause_eval(model, clause) != 1]
+                        new = {**new, **resolvents}
 
-        # random.shuffle(unsatisfied_clauses)
+            new_loop = False
+            for new_clause in new:
+                if new_clause not in clauses:
+                    clauses = {**clauses, **new}
+                    print(clauses)
+                    new_loop = True
+                    break
+            if new_loop:
+                continue
 
-        purity = dict()
+            return False
 
-        for clause in unsatisfied_clauses:
-            for variable in clause:
-                if variable not in model:
-                    if variable not in purity:
-                        purity[variable] = clause[variable]
-                    else:
-                        if purity[variable] != clause[variable]:
-                            purity[variable] = None
+    def pl_resolve(self, clause_i, clause_j):
+        # resolvants = dict(clause_i)
+        can_combine = True
 
-        for variable in purity:
-            if purity[variable] is not None:
-                return variable, purity[variable]
+        conflicts = 0
+        for var in clause_j:
+            if var in clause_i:
+                if clause_i[var] != clause_j[var]:
+                    conflicts += 1
+        print(conflicts)
 
-        return None, None
+        if conflicts == 0:
+            conflicts = 1
 
-    def find_unit_clause(self, model):
-        # random.shuffle(self.clauses)
+        resolvants = [dict() for _ in range(conflicts)]
 
-        for clause in self.clauses:
-            is_unit_clause = False
-            symbol = None
-            value = None
-            for variable in clause:
-                if variable not in model:
-                    if is_unit_clause:
-                        is_unit_clause = False
-                        break
-                    else:
-                        is_unit_clause = True
-                        symbol = variable
-                        value = clause[variable]
+        for var in clause_j:
+            if var in clause_i:
+                if clause_i[var] != clause_j[var]:
+                    conflicts -= 1
 
+                    if clause_i[var] is None:
+                        resolvants[conflicts][var] = clause_j[var]
+                    elif clause_j[var] is None:
+                        resolvants[conflicts][var] = clause_i[var]
+
+                    for i in range(len(resolvants)):
+                        if i != conflicts:
+                            resolvants[i][var] = None
                 else:
-                    if model[variable] == clause[variable]:
-                        is_unit_clause = False
-                        break
-            if is_unit_clause:
-                return symbol, value
-        return None, None
-
-    def get_first_symbol(self, symbols):
-        for i, symbol in enumerate(symbols):
-            if symbol is not None:
-                return i
-
-        # This probably won't occur
-        print("WHAAA")
-        return 0
-
-    def dpll_clause_eval(self, model, clause):
-        clause_assigned = True
-        for variable in clause:
-            if variable in model:
-                if model[variable] == clause[variable]:
-                    return 1
+                    for i in range(len(resolvants)):
+                        resolvants[i][var] = clause_j[var]
             else:
-                clause_assigned = False
-        if clause_assigned:
-            return -1
-        else:
-            return 0
+                for i in range(len(resolvants)):
+                    resolvants[i][var] = clause_j[var]
+
+        for var in clause_i:
+            if var not in clause_j:
+                for i in range(len(resolvants)):
+                    resolvants[i][var] = clause_i[var]
+
+        return {str(resolvant): resolvant for resolvant in resolvants}
+
+    ############# GSAT and WALKSAT #############
 
     def gsat(self):
         return self.generic_sat(200000, self.gsat_list)
@@ -172,7 +167,7 @@ class SAT:
         return self.generic_sat(100000, self.walksat_list)
 
     def gsat_list(self):
-        return self.variables
+        return {i: variable for i, variable in enumerate(self.variables)}
 
     def walksat_list(self):
         return random.choice([clause
@@ -253,17 +248,138 @@ class SAT:
                 return True
         return False
 
-    def write_solution(self, sol_filename):
-        decode = {value: key for key, value in self.encode.items()}
+    ############# DPLL #############
 
-        solution = open(sol_filename, "w")
-        for i, variable in enumerate(self.variables):
-            if variable:
-                solution.write("{}\n".format(decode[i]))
+    def dpll_satisfiable(self):
+        self.model = dict()
+        return self.dpll(self.variables, self.model)
 
-        solution.close()
+    def dpll(self, symbols, model):
+        self.visits += 1
+        if len(model) > self.largest_model:
+            print(len(model), self.visits)
+            self.largest_model = len(model)
+
+        result = True
+        for clause in self.clauses:
+            status = self.dpll_clause_eval(model, clause)
+            if status == 0:
+                result = False
+            elif status == -1:
+                return False
+        if result:
+            for symbol, value in model.items():
+                self.variables[symbol] = value
+            return True
+
+        p, value = self.find_pure_symbol(symbols, model)
+
+        if p is not None:
+            symbols[p], model[p] = None, value
+            return self.dpll(list(symbols), dict(model))
+
+        p, value = self.find_unit_clause(model)
+
+        if p is not None:
+            symbols[p], model[p] = None, value
+            return self.dpll(list(symbols), dict(model))
+
+        p = self.get_first_symbol(symbols)
+
+        symbols[p], model[p] = None, True
+        recurse = self.dpll(list(symbols), dict(model))
+        if recurse:
+            return recurse
+        else:
+            model[p] = False
+            return self.dpll(list(symbols), dict(model))
+
+    def find_pure_symbol(self, symbols, model):
+        unsatisfied_clauses = [clause
+                               for clause in self.clauses
+                               if self.dpll_clause_eval(model, clause) != 1]
+
+        purity = dict()
+
+        for clause in unsatisfied_clauses:
+            for variable in clause:
+                if variable not in model:
+                    if variable not in purity:
+                        purity[variable] = clause[variable]
+                    else:
+                        if purity[variable] != clause[variable]:
+                            purity[variable] = None
+
+        for variable in purity:
+            if purity[variable] is not None:
+                return variable, purity[variable]
+
+        return None, None
+
+    def find_unit_clause(self, model):
+
+        for clause in self.clauses:
+            is_unit_clause = False
+            symbol, value = None, None
+
+            for variable in clause:
+                if variable not in model:
+                    if is_unit_clause:
+                        is_unit_clause = False
+                        break
+                    else:
+                        is_unit_clause = True
+                        symbol, value = variable, clause[variable]
+
+                else:
+                    if model[variable] == clause[variable]:
+                        is_unit_clause = False
+                        break
+
+            if is_unit_clause:
+                return symbol, value
+
+        return None, None
+
+    def get_first_symbol(self, symbols):
+        for i, symbol in enumerate(symbols):
+            if symbol is not None:
+                return i
+
+        # This probably won't occur
+        print("WHAAA")
+        return 0
+
+    def dpll_clause_eval(self, model, clause):
+        clause_assigned = True
+        for variable in clause:
+            if variable in model:
+                if model[variable] == clause[variable]:
+                    return 1
+            else:
+                clause_assigned = False
+        if clause_assigned:
+            return -1
+        else:
+            return 0
 
 
 if __name__ == "__main__":
     sat = SAT(sys.argv[1])
-    print(sat.dpll_satisfiable())
+    sat.dpll_satisfiable()
+    print(sat.variables)
+
+    # clauses = [{1: True, 2: True, 3: True}, {1: False, 2: False}]
+    # assigned = {1: True, 3: False}
+    # alpha = {1: False}
+    # combined = clauses + [alpha]
+    # final = {str(clause): clause for clause in combined}
+
+    # additional = [{var: value}
+    #               for var, value in assigned.items()]
+    # addi = {str(clause): clause for clause in additional}
+
+    # final = {**final, **addi}
+
+    # print(final)
+    # print({str({var: value}): {var: value} for var, value in assigned.items()})
