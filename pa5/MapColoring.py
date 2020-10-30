@@ -34,11 +34,11 @@ def map_to_cnf(cnf_filename, data, colors):
             clause += "\n"
             file.write(clause)
 
+    file.close()
+
 
 def map_literal(variable, value, neg=False):
     return ("-" if neg else "") + "{}_{} ".format(variable, value)
-
-    file.close()
 
 
 if __name__ == "__main__":
@@ -88,15 +88,18 @@ if __name__ == "__main__":
 
     # generate cnf
     options = ["aus", "pete", "can"]
-    select = options[int(sys.argv[1])]
-    sol_filename = "{}_sat.sol".format(select)
-    cnf_filename = "{}_sat.cnf".format(select)
 
-    map_to_cnf(cnf_filename, map_data[select], colors)
+    arg = int(sys.argv[1])
+    if arg >= 0 and arg <= 2:
+        select = options[arg]
+        sol_filename = "{}_sat.sol".format(select)
+        cnf_filename = "{}_sat.cnf".format(select)
 
-    sat = SAT(cnf_filename)
+        map_to_cnf(cnf_filename, map_data[select], colors)
 
-    result = sat.gsat()
+        sat = SAT(cnf_filename)
 
-    if result:
-        sat.write_solution(sol_filename)
+        result = sat.gsat()
+
+        if result:
+            sat.write_solution(sol_filename)

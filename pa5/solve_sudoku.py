@@ -10,7 +10,7 @@ if __name__ == "__main__":
     #  of values:
     random.seed(1)
 
-    sudoku_problem = Sudoku(int(sys.argv[2]) == 1)
+    sudoku_problem = Sudoku(int(sys.argv[3]) == 1)
     sudoku_problem.load(sys.argv[1])
 
     puzzle_name = str(sys.argv[1][:-4])
@@ -19,10 +19,16 @@ if __name__ == "__main__":
 
     sudoku_problem.generate_cnf(cnf_filename)
 
-    sat = DPLL(cnf_filename)
-
-    result = sat.dpll_satisfiable()
+    if int(sys.argv[2]) == 1:
+        solver = SAT(cnf_filename)
+        result = solver.gsat()
+    elif int(sys.argv[2] == 2):
+        solver = SAT(cnf_filename)
+        result = solver.walksat()
+    else:
+        solver = DPLL(cnf_filename)
+        result = solver.dpll_satisfiable()
 
     if result:
-        sat.write_solution(sol_filename)
+        solver.write_solution(sol_filename)
         display_sudoku_solution(sol_filename)
