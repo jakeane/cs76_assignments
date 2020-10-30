@@ -8,6 +8,8 @@
 
 There are two main files for executing code: `solve_sudoku.py` and `MapColoring.py`. However, it is worth noting that if a `.cnf` file is the sole parameter for most solvers.
 
+It is worth mentioning the my programs expect `.cnf` files to be in the `cnf/` directory and for `.sol` files to be in the `solutions/` directory. `.sud` files, however are expected to be in the main directory.
+
 #### Solve Sudoku
 
 There are three command line arguments here:

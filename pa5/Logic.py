@@ -1,4 +1,5 @@
 import random
+import os
 
 
 class Logic:
@@ -47,7 +48,9 @@ class Logic:
         # Flip encode dictionary
         decode = {value: key for key, value in self.encode.items()}
 
-        solution = open(sol_filename, "w")
+        if not os.path.exists("solutions"):
+            os.makedirs("solutions")
+        solution = open("solutions/{}".format(sol_filename), "w")
         for i, variable in enumerate(self.variables):
             if variable:
                 solution.write("{}\n".format(decode[i]))

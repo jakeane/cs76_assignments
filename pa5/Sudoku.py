@@ -1,3 +1,6 @@
+import os
+
+
 class Sudoku:
     def __init__(self, extra_cnf):
         self.numbers = [[0 for i in range(9)] for j in range(9)]
@@ -22,7 +25,7 @@ class Sudoku:
         self.numbers[r - 1][c - 1] = value
 
     def read_solution(self, filename):
-        f = open(filename, "r")
+        f = open("solutions/{}".format(filename), "r")
         for line in f:
             # ignore unset variables
             literal = int(line)
@@ -165,6 +168,9 @@ class Sudoku:
                 filehandle.write(clause)
 
     def generate_cnf(self, filename):
+        if not os.path.exists("cnfs"):
+            os.makedirs("cnfs")
+
         f = open(filename, "w")
         self.write_cell_clauses(f)
         self.write_row_clauses(f)

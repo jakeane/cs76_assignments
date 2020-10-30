@@ -14,7 +14,7 @@ if __name__ == "__main__":
     sudoku_problem.load(sys.argv[1])
 
     puzzle_name = str(sys.argv[1][:-4])
-    cnf_filename = "{}.cnf".format(puzzle_name)
+    cnf_filename = "cnfs/{}.cnf".format(puzzle_name)
     sol_filename = puzzle_name + ".sol"
 
     sudoku_problem.generate_cnf(cnf_filename)
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if int(sys.argv[2]) == 1:
         solver = SAT(cnf_filename)
         result = solver.gsat()
-    elif int(sys.argv[2] == 2):
+    elif int(sys.argv[2]) == 2:
         solver = SAT(cnf_filename)
         result = solver.walksat()
     else:

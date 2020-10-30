@@ -1,10 +1,14 @@
 from DPLL import DPLL
 from SAT import SAT
 import sys
+import os
 
 
 def map_to_cnf(cnf_filename, data, colors):
-    file = open(cnf_filename, "w")
+    if not os.path.exists("cnfs"):
+        os.makedirs("cnfs")
+
+    file = open("cnfs/{}".format(cnf_filename), "w")
     for variable in data:
         clause = ""
         for color in colors:
