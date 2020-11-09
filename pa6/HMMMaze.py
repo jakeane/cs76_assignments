@@ -16,12 +16,6 @@ class HMMMaze:
 
         self.moves = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 
-        # Get's number of neighbors for a given tile
-        # Can be used to infer chance of hitting wall
-        self.transitions = np.array([[self.num_neighbors((x, y))
-                                      for x in range(self.width)]
-                                     for y in range(self.height)])
-
         # Probability of accurate/inaccurate reading
         self.tpr = tpr
         self.fpr = (1 - tpr) / (len(self.colors) - 1)
@@ -38,16 +32,6 @@ class HMMMaze:
         f.close()
         self.width = len(self.maze[0])
         self.height = len(self.maze)
-
-    # Get num neighbors at given tile
-    def num_neighbors(self, pos):
-        neighbors = 0
-        if self.is_floor(pos):
-            for move in self.moves:
-                new_pos = tuple(map(sum, zip(pos, move)))
-                if self.is_floor(new_pos):
-                    neighbors += 1
-        return neighbors
 
     # Generate a sequence of movements and sensor readings
     def generate_sequence(self, total_moves=10):
@@ -120,7 +104,7 @@ class HMMMaze:
                         # tran_model = P(X_i | x_{i-1})
                         tran_model = self.generate_transition((x, y))
 
-                        # curr_state = P(x_{i-1} | e_{0:i})
+                        # curr_state = P(x_{i-1} | e_{0:i-1})
                         # mult multiplies the two arrays
                         mult = np.array([[tran_model[y][x] * math.exp(curr_state[y][x])
                                           for x in range(self.width)]
@@ -173,7 +157,7 @@ class HMMMaze:
             pos_prob = np.ma.log(pos_prob).filled(float('-inf'))
 
             # init arrays to fill
-            # next_prob = max[P(X_i | x_{i-1}) * max[P(x_{1...i-1} | e_{0:i})]]
+            # next_prob = max[P(X_i | x_{i-1}) * max[P(x_{0...i-1} | e_{0:i-1})]]
             next_prob = [[float('-inf')
                           for _ in range(self.width)]
                          for _ in range(self.height)]
@@ -260,7 +244,7 @@ class HMMMaze:
         # own position is 0.25 * every adjacent wall
         # 0 for all else
         tran_model = np.array([[0.25 if (x, y) in prev_pos
-                                else 1 - (0.25 * self.transitions[y][x]) if (x, y) == pos
+                                else 1 - (0.25 * len(prev_pos)) if (x, y) == pos
                                 else 0
                                 for x in range(self.width)]
                                for y in range(self.height)])
@@ -284,8 +268,13 @@ class HMMMaze:
     # Output state at timestep
     # Not generalized to larger mazes well
     def print_time_step(self, curr_state, curr_pos, curr_color, curr_path):
-        maze_output = "Scanned: '{}' at {}\n".format(
-            curr_color[-1], curr_path[-1])
+        if self.maze[curr_pos[1]][curr_pos[0]] == curr_color[-1]:
+            scan_error = ""
+        else:
+            scan_error = " (BAD SCAN)"
+
+        maze_output = "Scanned: '{}' at {}{}\n".format(
+            curr_color[-1], curr_path[-1], scan_error)
         maze_output += "Maze:\t\tProbabilities:\n"
 
         linear_state = self.convert_probs(curr_state)
